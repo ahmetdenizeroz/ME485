@@ -87,7 +87,7 @@ class GradElements(BaseElements,  gradFluidElements):
         
         # Kernel to post-process
         self.post = Kernel(self._make_post(), upts_in)
-    """
+
  #-------------------------------------------------------------------------------#
     def compute_L2_norm(self):
         nvars, nface, ndims = self.nvars, self.nface, self.ndims
@@ -99,7 +99,7 @@ class GradElements(BaseElements,  gradFluidElements):
         # **************************#
 
         return resid
-    """
+
 #-------------------------------------------------------------------------------#
     # Assign cell centers values to face centers
     def _make_compute_fpts(self):
@@ -113,7 +113,7 @@ class GradElements(BaseElements,  gradFluidElements):
                         fpts[face, 0, idx] = upts[0, 0, idx]
             print(upts)
         return self.be.make_loop(self.neles, _compute_fpts)
-    """
+
 #-------------------------------------------------------------------------------#
     def _make_grad_ls(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
@@ -130,11 +130,11 @@ class GradElements(BaseElements,  gradFluidElements):
                 # **************************#
 
         # Compile the function
-        return self.be.make_loop(self.neles, _cal_grad)    
+        return self.be.make_loop(self.neles, _cal_grad)
 #-------------------------------------------------------------------------------#
     def _make_grad_gg(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
-        Normal vector and volume
+        #Normal vector and volume
         snorm_mag = self._mag_snorm_fpts
         snorm_vec = np.rollaxis(self._vec_snorm_fpts, 2)
         vol       = self._vol
@@ -142,10 +142,11 @@ class GradElements(BaseElements,  gradFluidElements):
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwise loop starts here
             for i in range(i_begin, i_end):
-               
-                # **************************#
-                #Complete
-                # **************************#
+                for dimension in range(ndims):
+                    RHS = 0
+                    for face in range(nface):
+                        RHS += fpts[face, 0, i] * snorm_vec[dimension, face, i] * snorm_mag[face, i]
+                    grad[dimension, 0, i] = (1/vol) * RHS
 
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)      
@@ -200,4 +201,3 @@ class GradElements(BaseElements,  gradFluidElements):
                 print(idx, grad[0, 0, idx], grad[1, 0, idx])
 
         return self.be.make_loop(self.neles, post)
-    """

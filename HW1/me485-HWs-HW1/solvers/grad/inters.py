@@ -81,7 +81,7 @@ class GradBCInters(BaseBCInters):
         # Kernel to compute differnce of solution at face
         self.compute_delu = Kernel(self._make_delu(), *fpts)
         self.compute_avgu = Kernel(self._make_avgu(), *fpts)
-    """
+
     def _make_delu(self):
         nvars = self.nvars
         lt, le, lf = self._lidx
@@ -104,8 +104,8 @@ class GradBCInters(BaseBCInters):
                 # **************************#
 
         return self.be.make_loop(self.nfpts, compute_delu)
-    """
-    """
+
+
     def _make_avgu(self):
         nvars = self.nvars
         lt, le, lf = self._lidx
@@ -126,7 +126,7 @@ class GradBCInters(BaseBCInters):
                 # **************************#
 
         return self.be.make_loop(self.nfpts, compute_avgu)
-    """
+
 class GradWallBCInters(GradBCInters):
     name = 'drichlet'
     def __init__(self, be, cfg, elemap, lhs, bctype):
@@ -163,7 +163,7 @@ class GradMPIInters(BaseMPIInters):
         self.pack = Kernel(self._make_pack(), lhs, *fpts)
         self.send, self.sreq = self._make_send(lhs)
         self.recv, self.rreq = self._make_recv(rhs)
-    """
+
     def _make_delu(self):
         nvars = self.nvars
         lt, le, lf = self._lidx
@@ -192,7 +192,7 @@ class GradMPIInters(BaseMPIInters):
                
 
         return self.be.make_loop(self.nfpts, compute_avgu)
-    """
+
     def _make_pack(self):
         nvars = self.nvars
         lt, le, lf = self._lidx
