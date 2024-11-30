@@ -83,13 +83,22 @@ class GradElements(BaseElements,  gradFluidElements):
         # Kernel to post-process
         self.post = Kernel(self._make_post(), upts_in)
  #-------------------------------------------------------------------------------#
-    def compute_L2_norm(self):
+    def compute_L2_norm(self, exact_soln):
         nvars, nface, ndims = self.nvars, self.nface, self.ndims
         vol                 = self._vol
         # **************************#
 
-        #Complete
+        neles = self.neles
 
+        resid = 0
+        for i in range(neles):
+            for j in range(nvars):
+
+                resid = resid + np.sum( ( self.upts_out[j, i] - exact_soln[j,i] ) ** 2 * vol[i] )
+
+        resid = resid / (neles * nvars)
+        resid = np.sqrt(resid)
+    
         # **************************#
 
         return resid
@@ -130,7 +139,7 @@ class GradElements(BaseElements,  gradFluidElements):
 #-------------------------------------------------------------------------------#
     def _make_grad_gg(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
-        Normal vector and volume
+        #Normal vector and volume
         snorm_mag = self._mag_snorm_fpts
         snorm_vec = np.rollaxis(self._vec_snorm_fpts, 2)
         vol       = self._vol
