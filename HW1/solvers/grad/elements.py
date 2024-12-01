@@ -86,15 +86,25 @@ class GradElements(BaseElements,  gradFluidElements):
     def compute_L2_norm(self, exact_soln):
         nvars, nface, ndims = self.nvars, self.nface, self.ndims
         vol                 = self._vol
-        # **************************#
+         # **************************#
 
         neles = self.neles
 
         resid = 0
-        for i in range(neles):
-            for j in range(nvars):
 
-                resid = resid + np.sum( ( self.upts_out[j, i] - exact_soln[j,i] ) ** 2 * vol[i] )
+        #Assume that there is a matrix of results. The dimensions of this matrix are num.of.elements X num.of.variables . 
+        #Example: Gradient vectors at the center of elements. (1st row is for element1 [x,y], 2nd row is for element2 [x,y], etc.)
+        #The following code calculates the weighted L2 error norm of this matrix of results.
+
+        for i in range(neles):  #Loop over elements (rows of the matrix)
+            for j in range(nvars):  #Loop over variables (columns of the matrix)
+                
+                #Finite volume method L2 formula. This formula takes squares of variables which belong to the same element, sum them and
+                #multiply the result with the volume of the element. Therfore, the sum of square of variables are weighted wrt. the size of
+                #the element. Then, all the weighted sum of squares are again summed up for different elements and stored in the resid value.
+                #The summations value is divided to the size of matrix to find an average value. Finally, the sqrt of the value is taken.
+
+                resid = resid + np.sum( ( self.upts_out[j, i] - exact_soln[j,i] ) ** 2 * vol[i] )  
 
         resid = resid / (neles * nvars)
         resid = np.sqrt(resid)
