@@ -30,7 +30,7 @@ class GradIntInters(BaseIntInters):
                     ul = uf[lti][lfi, jdx, lei]
                     ur = uf[rti][rfi, jdx, rei]
                     # **************************#
-                    #Complete
+                    self.delu[idx, jdx] = ur - ul
                     # **************************#
         return self.be.make_loop(self.nfpts, compute_delu)
 
@@ -48,7 +48,7 @@ class GradIntInters(BaseIntInters):
                     ul = uf[lti][lfi, jdx, lei]
                     ur = uf[rti][rfi, jdx, rei]
                     # **************************#
-                    #Complete
+                    self.avgu[idx, jdx] = 0.5 * (ul + ur)
                     # **************************#
 
         return self.be.make_loop(self.nfpts, compute_avgu)
@@ -100,7 +100,11 @@ class GradBCInters(BaseBCInters):
                 bc(ul, ur, nfi)
 
                 # **************************#
-                #Complete
+
+                for jdx in range(nvars):
+
+                    self.delu[jdx, idx] = ur[jdx] - ul[jdx]
+
                 # **************************#
 
         return self.be.make_loop(self.nfpts, compute_delu)
@@ -121,7 +125,10 @@ class GradBCInters(BaseBCInters):
                 ul = uf[lti][lfi, :, lei]
                 bc(ul, ur, nfi)
                 # **************************#
-                #Complete
+
+                for jdx in range(nvars):
+                    self.avgu[jdx, idx] = 0.5 * (ur[jdx] + ul[jdx])
+
                 # **************************#
 
         return self.be.make_loop(self.nfpts, compute_avgu)
