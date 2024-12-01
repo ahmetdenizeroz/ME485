@@ -120,13 +120,16 @@ class GradElements(BaseElements,  gradFluidElements):
 
         def _compute_fpts(i_begin, i_end, upts, fpts):
             # Copy upts to fpts
-            for idx in range(i_begin, i_end):
-                for j in range(nvars):
+            # fpts --> Flux Points
+            # upts --> Universal Points (Center Points)
+
+            for idx in range(i_begin, i_end): #Iteration over elements
+                for j in range(nvars):  #Iteration over variables
                     # **************************#
-                    for k in range(nface):
+                    for k in range(nface):   #Iteration over faces
                         
-                        fpts[k, j, idx] = upts[j, idx]
-                    
+                        #The values calculated for the center (upts) are stored in the faces of the element.
+                        fpts[k, j, idx] = upts[j, idx]    
 
                     # **************************#
         
@@ -139,17 +142,16 @@ class GradElements(BaseElements,  gradFluidElements):
 
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwiseloop
-            for i in range(i_begin, i_end):
+            for i in range(i_begin, i_end):  #Loop over elements
                 # **************************#
 
+                for j in range(nvar):  #Loop over variables
 
-                for j in range(nvar):
+                    for k in range(ndims):   #Loop over dimensions
 
-                    for k in range(ndims):
+                        grad[k, j, i] = 0  #Reset the result for the next loop
 
-                        grad[k, j, i] = 0
-
-                        for m in range(nface):
+                        for m in range(nface):    #Loop over faces
 
                             grad[k, j, i] = grad[k, j, i] + op[k, m, i] * (fpts[m, j, i] - fpts[0, j, i])
                 
