@@ -118,7 +118,7 @@ class GradElements(BaseElements,  gradFluidElements):
                         fpts[face, 0, idx] = upts[0, 0, idx]
             print(upts)
         return self.be.make_loop(self.neles, _compute_fpts)
-
+    """
 #-------------------------------------------------------------------------------#
     def _make_grad_ls(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
@@ -136,6 +136,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)
+    """
 #-------------------------------------------------------------------------------#
     def _make_grad_gg(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
@@ -182,7 +183,7 @@ class GradElements(BaseElements,  gradFluidElements):
         return self.be.make_loop(self.neles, _cal_recon)
 
 
-
+    """
 #-------------------------------------------------------------------------------#
     @property
     # @fc.lru_cache()
@@ -199,7 +200,7 @@ class GradElements(BaseElements,  gradFluidElements):
         #Complete
         # **************************#
         return op
-
+    """
     def _make_post(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         grad = self.grad

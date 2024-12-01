@@ -38,18 +38,21 @@ class GradIntInters(BaseIntInters):
         nvars = self.nvars
         lt, le, lf = self._lidx
         rt, re, rf = self._ridx
-
+        #print(lt, rt)
+        # When this function is called at construct_kernels method, fpts array is given input. I believe uf is fps array.
         def compute_avgu(i_begin, i_end, *uf):
             for idx in range(i_begin, i_end):
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
                 rti, rfi, rei = rt[idx], rf[idx], re[idx]
+                for variable in range(nvars):
+                    ul = uf[lti][lfi, variable, lei]
+                    ur = uf[rti][rfi, variable, rei]
+                    # Calculation of face flux with equal weights.
+                    uface = 0.5 * ul + 0.5 * ur
 
-                for jdx in range(nvars):
-                    ul = uf[lti][lfi, jdx, lei]
-                    ur = uf[rti][rfi, jdx, rei]
-                    # **************************#
-                    #Complete
-                    # **************************#
+                    #TODO: Check validity of following two lines
+                    uf[lti][lfi, variable, lei] = uface
+                    uf[rti][rfi, variable, rei] = uface
 
         return self.be.make_loop(self.nfpts, compute_avgu)
 
@@ -121,9 +124,9 @@ class GradBCInters(BaseBCInters):
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
                 ul = uf[lti][lfi, :, lei]
                 bc(ul, ur, nfi)
-                # **************************#
-                #Complete
-                # **************************#
+                for variable in range(nvars):
+                    uface = 0.5 * ul[variable] + 0.5 * ur[variable]
+                    uf[lti][lfi, variable, lei] = uface
 
         return self.be.make_loop(self.nfpts, compute_avgu)
 
@@ -164,6 +167,7 @@ class GradMPIInters(BaseMPIInters):
         self.send, self.sreq = self._make_send(lhs)
         self.recv, self.rreq = self._make_recv(rhs)
 
+    """
     def _make_delu(self):
         nvars = self.nvars
         lt, le, lf = self._lidx
@@ -192,7 +196,7 @@ class GradMPIInters(BaseMPIInters):
                
 
         return self.be.make_loop(self.nfpts, compute_avgu)
-
+    """
     def _make_pack(self):
         nvars = self.nvars
         lt, le, lf = self._lidx
