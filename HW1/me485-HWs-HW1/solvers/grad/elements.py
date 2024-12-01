@@ -62,8 +62,8 @@ class GradElements(BaseElements,  gradFluidElements):
         # Construct arrays for flux points, dt and derivatives of source term
         self.fpts = fpts = np.empty((self.nface, self.nvars, self.neles))
         self.grad = grad = np.zeros((self.ndims, self.nvars, self.neles))
-        print(np.shape(fpts))
-        print(np.shape(fpts))
+        #print(np.shape(fpts))
+        #print(np.shape(fpts))
 
         lim = np.ones((self.nvars, self.neles))
 
@@ -111,10 +111,12 @@ class GradElements(BaseElements,  gradFluidElements):
 
         def _compute_fpts(i_begin, i_end, upts, fpts):
             # Copy upts to fpts
+            #print(fpts)
             for idx in range(i_begin, i_end):
                 for j in range(nvars):
                     for face in range(nface):
-                        fpts[face, 0, idx] = upts[0, 0, idx]
+                        #fpts[face][j][idx] = upts[0, j, idx]
+                        fpts[face][idx] = upts[0, idx]
         return self.be.make_loop(self.neles, _compute_fpts)
 
 #-------------------------------------------------------------------------------#
@@ -130,9 +132,9 @@ class GradElements(BaseElements,  gradFluidElements):
                     b = np.zeros((nface, 1))
                     for face in range(nface):
                         b[face] = fpts[face, variable, i]
-                    grad = op[i] @ b
+                    gradtemp = op[i] @ b
                     for dimension in range(ndims):
-                        grad[dimension, variable, i] = grad[dimension]
+                        grad[dimension, variable, i] = gradtemp[dimension]
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)
 
