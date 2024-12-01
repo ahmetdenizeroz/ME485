@@ -197,7 +197,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
                     for k in range(ndims):  
 
-                        grad[k, j, i] = 0.0
+                        grad[k, j, i] = 0.0 
 
                         for m in range(nface):  
 
@@ -245,13 +245,26 @@ class GradElements(BaseElements,  gradFluidElements):
 
 
         # **************************#
+        grad_method = self._grad_method
         
-        
-        op = np.zeros_like(dxc)
-        
-        for j in range(self.ndims):  
-            op[j] = dxc[j] / (distance + eps)
+        op = []
 
+        p = 1
+        
+      
+        if grad_method == 'weighted-least-square':
+
+            for element_index in range(self.nelem):
+
+                for face_index in range(self.nface):
+
+                    op_element = np.append(op, 1/distance(1, face_index, element_index) , axis = 0)
+            
+            op = op + op_element  # op => [face, element]
+
+        else:
+            
+            op = np.ones_like(distance)
 
         # **************************#
         return op
@@ -261,7 +274,7 @@ class GradElements(BaseElements,  gradFluidElements):
         grad = self.grad
         xc = self.xc.T        
         def post(i_begin, i_end, upts):
-            # Apply the function over eleemnts
+            # Apply the function over elements
             for idx in range(i_begin, i_end):          
                 print(idx, grad[0, 0, idx], grad[1, 0, idx])
 
