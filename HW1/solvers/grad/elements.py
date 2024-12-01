@@ -93,7 +93,7 @@ class GradElements(BaseElements,  gradFluidElements):
         resid = 0
 
         #Assume that there is a matrix of results. The dimensions of this matrix are num.of.elements X num.of.variables . 
-        #Example: Gradient vectors at the center of elements. (1st row is for element1 [x,y], 2nd row is for element2 [x,y], etc.)
+        #Example: Gradient vectors at the center of elements. (1st row is for element1, 2nd row is for element2, etc.)
         #The following code calculates the weighted L2 error norm of this matrix of results.
 
         for i in range(neles):  #Loop over elements (rows of the matrix)
@@ -142,7 +142,17 @@ class GradElements(BaseElements,  gradFluidElements):
             for i in range(i_begin, i_end):
                 # **************************#
 
-                #Complete
+
+                for j in range(nvar):
+
+                    for k in range(ndims):
+
+                        grad[k, j, i] = 0
+
+                        for m in range(nface):
+
+                            grad[k, j, i] = grad[k, j, i] + op[k, m, i] * (fpts[m, j, i] - fpts[0, j, i])
+                
 
                 # **************************#
 
@@ -161,7 +171,18 @@ class GradElements(BaseElements,  gradFluidElements):
             for i in range(i_begin, i_end):
                
                 # **************************#
-                #Complete
+                
+                for j in range(nvars):  
+
+                    for k in range(ndims):  
+
+                        grad[k, j, i] = 0.0
+
+                        for m in range(nface):  
+
+                            grad[k, j, i] = grad[k, j, i] + snorm_vec[k, m, i] * fpts[m, j, i] / vol[i]
+
+
                 # **************************#
 
         # Compile the function
@@ -203,7 +224,14 @@ class GradElements(BaseElements,  gradFluidElements):
 
 
         # **************************#
-        #Complete
+        
+        #tekrar bak buna !!
+        op = np.zeros_like(dxc)
+        
+        for j in range(self.ndims):  
+            op[j] = dxc[j] / (distance + eps)
+
+
         # **************************#
         return op
 
