@@ -123,8 +123,10 @@ class GradElements(BaseElements,  gradFluidElements):
             for idx in range(i_begin, i_end):
                 for j in range(nvars):
                     # **************************#
-
-                    #Complete
+                    for k in range(nface):
+                        
+                        fpts[k, j, idx] = upts[j, idx]
+                    
 
                     # **************************#
         
