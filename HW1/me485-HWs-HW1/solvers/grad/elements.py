@@ -116,9 +116,8 @@ class GradElements(BaseElements,  gradFluidElements):
                 for j in range(nvars):
                     for face in range(nface):
                         fpts[face, 0, idx] = upts[0, 0, idx]
-            print(upts)
         return self.be.make_loop(self.neles, _compute_fpts)
-    """
+
 #-------------------------------------------------------------------------------#
     def _make_grad_ls(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
@@ -136,7 +135,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)
-    """
+
 #-------------------------------------------------------------------------------#
     def _make_grad_gg(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
@@ -183,7 +182,6 @@ class GradElements(BaseElements,  gradFluidElements):
         return self.be.make_loop(self.neles, _cal_recon)
 
 
-    """
 #-------------------------------------------------------------------------------#
     @property
     # @fc.lru_cache()
@@ -194,13 +192,13 @@ class GradElements(BaseElements,  gradFluidElements):
         dxc = np.rollaxis(self.dxc, 2)
         # (Nfaces, Nelements)
         distance = np.linalg.norm(dxc, axis=0)
-
-
-        # **************************#
-        #Complete
-        # **************************#
+        # Creating empty array for operator storage
+        op = np.empty((self.ndims, self.nface, self.neles))
+        for dimension in range(self.ndims): # for each dimension
+            op[dimension] = dxc[dimension] / distance   # add the 1/distance
+            
         return op
-    """
+
     def _make_post(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         grad = self.grad
