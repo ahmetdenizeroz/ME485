@@ -127,11 +127,11 @@ class GradElements(BaseElements,  gradFluidElements):
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwiseloop
             for i in range(i_begin, i_end):
-                # **************************#
-
-                #Complete
-
-                # **************************#
+                for variable in range(nvars):
+                    for dimension in range(ndims):
+                        for face in range(nface):
+                            if face != 0:
+                                grad[dimension, variable, i] =
 
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)
@@ -191,12 +191,29 @@ class GradElements(BaseElements,  gradFluidElements):
         # (Nfaces, Nelements, dim) -> (dim, Nfaces, Nelements)
         dxc = np.rollaxis(self.dxc, 2)
         # (Nfaces, Nelements)
+
+        # only possible use of distance is for weighted ls.
         distance = np.linalg.norm(dxc, axis=0)
+
+        # we need p value assignment for determining the weight, it will be taken as 2 for now.
+        # with examination of code, a little help is taken from base\elements.py
+        p = 2
+        if self._grad_method == 'least-square':
+            w = 1.0
+        elif self._grad_method == 'weighted-least-square':
+            w = 1 / (distance**p)
+
+
         # Creating empty array for operator storage
-        op = np.empty((self.ndims, self.nface, self.neles))
-        for dimension in range(self.ndims): # for each dimension
-            op[dimension] = dxc[dimension] / distance   # add the 1/distance
-            
+        op = np.zeros(self.neles)
+        for element in range(self.neles):
+            A = np.zeros((self.nface, self.ndims))
+            for face in range(self.nface):
+                for dimension in range(self.ndims):
+                    A[face][dimension] = dxc[dimension][face][element]
+            AT = np.transpose(A)
+            op[element] = np.linalg.inv(A * AT) * AT
+
         return op
 
     def _make_post(self):
