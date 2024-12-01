@@ -128,11 +128,12 @@ class GradElements(BaseElements,  gradFluidElements):
             # Elementwiseloop
             for i in range(i_begin, i_end):
                 for variable in range(nvars):
+                    b = np.zeros((nface, 1))
+                    for face in range(nface):
+                        b[face] = fpts[face, variable, i]
+                    grad = op[i] * b
                     for dimension in range(ndims):
-                        for face in range(nface):
-                            if face != 0:
-                                grad[dimension, variable, i] =
-
+                        grad[dimension, variable, i] = grad[dimension]
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)
 
@@ -203,6 +204,8 @@ class GradElements(BaseElements,  gradFluidElements):
         elif self._grad_method == 'weighted-least-square':
             w = 1 / (distance**p)
 
+        # Scaled dxc vector
+        dxcs = dxc*np.sqrt(w)
 
         # Creating empty array for operator storage
         op = np.zeros(self.neles)
@@ -210,7 +213,7 @@ class GradElements(BaseElements,  gradFluidElements):
             A = np.zeros((self.nface, self.ndims))
             for face in range(self.nface):
                 for dimension in range(self.ndims):
-                    A[face][dimension] = dxc[dimension][face][element]
+                    A[face][dimension] = dxcs[dimension][face][element]
             AT = np.transpose(A)
             op[element] = np.linalg.inv(A * AT) * AT
 
