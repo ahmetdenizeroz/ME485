@@ -258,7 +258,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
                 for face_index in range(self.nface):
 
-                    op_element = np.append(op, 1/distance(1, face_index, element_index) , axis = 0)
+                    op_element = np.append(op, 1/(distance(1, face_index, element_index))**p , axis = 0)
             
             op = op + op_element  # op => [face, element]
 
