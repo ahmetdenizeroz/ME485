@@ -90,11 +90,12 @@ class GradElements(BaseElements,  gradFluidElements):
 
  #-------------------------------------------------------------------------------#
     def compute_L2_norm(self):
+        print("compute_L2_norm")
         nvars, nface, ndims = self.nvars, self.nface, self.nvars
         vol                 = self._vol
 
         # **************************#
-
+        resid = 1
         # **************************#
 
         return resid
@@ -103,7 +104,7 @@ class GradElements(BaseElements,  gradFluidElements):
     # Assign cell centers values to face centers
     def _make_compute_fpts(self):
         nvars, nface = self.nvars, self.nface
-
+        print("_make_compute_fpts")
         # UPTS is an array containing center values of every element in the region of interest.
         # FPTS is an array containing face values. It's sahepe is (nface, nvars, nelemets), menaing that
         # it can store face values of every variable for every element, for numbe of face times. Meaning that
@@ -121,6 +122,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
 #-------------------------------------------------------------------------------#
     def _make_grad_ls(self):
+        print("_make_grad_ls")
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         # Gradient operator 
         op = self._grad_operator
@@ -140,6 +142,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
 #-------------------------------------------------------------------------------#
     def _make_grad_gg(self):
+        print("_make_grad_gg")
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         #Normal vector and volume
         snorm_mag = self._mag_snorm_fpts
@@ -189,6 +192,7 @@ class GradElements(BaseElements,  gradFluidElements):
     # @fc.lru_cache()
     # @chop
     def _grad_operator(self):
+        print("_grad_operator")
         # Difference of displacement vector (cell to cell)
         # (Nfaces, Nelements, dim) -> (dim, Nfaces, Nelements)
         dxc = np.rollaxis(self.dxc, 2)
