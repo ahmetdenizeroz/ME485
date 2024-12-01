@@ -62,8 +62,8 @@ class GradElements(BaseElements,  gradFluidElements):
         # Construct arrays for flux points, dt and derivatives of source term
         self.fpts = fpts = np.empty((self.nface, self.nvars, self.neles))
         self.grad = grad = np.zeros((self.ndims, self.nvars, self.neles))
-        #print(np.shape(fpts))
-        #print(np.shape(grad))
+        print(np.shape(fpts))
+        print(np.shape(fpts))
 
         lim = np.ones((self.nvars, self.neles))
 
@@ -92,9 +92,8 @@ class GradElements(BaseElements,  gradFluidElements):
     def compute_L2_norm(self):
         nvars, nface, ndims = self.nvars, self.nface, self.nvars
         vol                 = self._vol
-        # **************************#
 
-        #Complete
+        # **************************#
 
         # **************************#
 
@@ -131,7 +130,7 @@ class GradElements(BaseElements,  gradFluidElements):
                     b = np.zeros((nface, 1))
                     for face in range(nface):
                         b[face] = fpts[face, variable, i]
-                    grad = op[i] * b
+                    grad = op[i] @ b
                     for dimension in range(ndims):
                         grad[dimension, variable, i] = grad[dimension]
         # Compile the function
@@ -176,7 +175,7 @@ class GradElements(BaseElements,  gradFluidElements):
                     for k in range(nface):
                         tmp = 0
                         for j in range(ndims):
-                            tmp += op[k, j, i]*grad[j, l, i]
+                            tmp += op[k, j, i] * grad[j, l, i]
                                                     
                         fpts[k, l, i] = upts[l, i] + lim[l, i]*tmp
 
@@ -199,6 +198,8 @@ class GradElements(BaseElements,  gradFluidElements):
         # we need p value assignment for determining the weight, it will be taken as 2 for now.
         # with examination of code, a little help is taken from base\elements.py
         p = 2
+        w = 1
+
         if self._grad_method == 'least-square':
             w = 1.0
         elif self._grad_method == 'weighted-least-square':
@@ -208,14 +209,15 @@ class GradElements(BaseElements,  gradFluidElements):
         dxcs = dxc*np.sqrt(w)
 
         # Creating empty array for operator storage
-        op = np.zeros(self.neles)
+        op = np.empty(self.neles, dtype=object)
         for element in range(self.neles):
             A = np.zeros((self.nface, self.ndims))
             for face in range(self.nface):
                 for dimension in range(self.ndims):
                     A[face][dimension] = dxcs[dimension][face][element]
             AT = np.transpose(A)
-            op[element] = np.linalg.inv(A * AT) * AT
+            mult = np.dot(AT , A)
+            op[element] = np.linalg.inv(mult) @ AT
 
         return op
 

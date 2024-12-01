@@ -26,12 +26,14 @@ class GradIntInters(BaseIntInters):
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
                 rti, rfi, rei = rt[idx], rf[idx], re[idx]
 
-                for jdx in range(nvars):
-                    ul = uf[lti][lfi, jdx, lei]
-                    ur = uf[rti][rfi, jdx, rei]
-                    # **************************#
-                    #Complete
-                    # **************************#
+                for variable in range(nvars):
+                    ul = uf[lti][lfi, variable, lei]
+                    ur = uf[rti][rfi, variable, rei]
+                    uface = ur-ul
+                    #TODO: Check validity of following two lines
+                    uf[lti][lfi, variable, lei] = uface
+                    uf[rti][rfi, variable, rei] = uface
+
         return self.be.make_loop(self.nfpts, compute_delu)
 
     def _make_avgu(self):
@@ -102,9 +104,9 @@ class GradBCInters(BaseBCInters):
                 ul = uf[lti][lfi, :, lei]
                 bc(ul, ur, nfi)
 
-                # **************************#
-                #Complete
-                # **************************#
+                for variable in range(nvars):
+                    uface = ur[variable] - ul[variable]
+                    uf[lti][lfi, variable, lei] = uface
 
         return self.be.make_loop(self.nfpts, compute_delu)
 
