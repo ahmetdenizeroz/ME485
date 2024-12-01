@@ -138,23 +138,39 @@ class GradElements(BaseElements,  gradFluidElements):
     def _make_grad_ls(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         # Gradient operator 
-        op = self._grad_operator
+        op = self._grad_operator   #[face, element]
 
+        dxf = self.dxf  #something new is added here! [faces, elem, dim](?)
+        
+        #Assume that the matrix system is A*x = b
+        
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwiseloop
-            for i in range(i_begin, i_end):  #Loop over elements
+            grad_forelement = []
+            for element_index in range(i_begin, i_end):  #Loop over elements
                 # **************************#
 
-                for j in range(nvar):  #Loop over variables
+                for variable_index in range(nvars):  #Loop over variables
 
-                    for k in range(ndims):   #Loop over dimensions
+                    A = []
+                    b = []
+                    for face_index in range(nface):   #Loop over dimensions
 
-                        grad[k, j, i] = 0  #Reset the result for the next loop
+                        A_oneface = []
+                        for dim_index in range(ndims):    #Loop over faces
 
-                        for m in range(nface):    #Loop over faces
+                            A_oneface = A_oneface + [dxf(face_index, element_index, dim_index)] 
+                            #dxf gives the value of self.xf - self.xc (position vector between face and centroid)
+                            #A_oneface creates an array of [x1_x0 y1-y0 ....] then [x2_x0 y2-y0 ....] ...
 
-                            grad[k, j, i] = grad[k, j, i] + op[k, m, i] * (fpts[m, j, i] - fpts[0, j, i])
-                
+                    b = np.append(b, op(face_index, element_index) * [ fpts[face_index, variable_index, element_index] - self.upts_out[variable_index, element_index] ], axis = 0)
+                    # The b vector which is [w1*[Q1 - Qc], w2*[Q2 - Qc], ...] (w --> weight factor which came from op() )
+
+                    A = np.append(A, A_oneface, axis = 0) 
+                    #The arrays are combined and a matrix is created. 
+                    #Rows are faces, columns are dimensional pos. differences.
+
+                grad_forelement() = np.linalg.inv(np.transpose(A) * A ) * np.transpose(A) * b
 
                 # **************************#
 
@@ -227,7 +243,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
         # **************************#
         
-        #tekrar bak buna !!
+        
         op = np.zeros_like(dxc)
         
         for j in range(self.ndims):  
