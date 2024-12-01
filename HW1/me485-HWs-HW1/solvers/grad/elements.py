@@ -90,7 +90,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
  #-------------------------------------------------------------------------------#
     def compute_L2_norm(self):
-        nvars, nface, ndims = self.nvars, self.nface, self.ndims
+        nvars, nface, ndims = self.nvars, self.nface, self.nvars
         vol                 = self._vol
         # **************************#
 
@@ -104,6 +104,11 @@ class GradElements(BaseElements,  gradFluidElements):
     # Assign cell centers values to face centers
     def _make_compute_fpts(self):
         nvars, nface = self.nvars, self.nface
+
+        # UPTS is an array containing center values of every element in the region of interest.
+        # FPTS is an array containing face values. It's sahepe is (nface, nvars, nelemets), menaing that
+        # it can store face values of every variable for every element, for numbe of face times. Meaning that
+        # different values of coincident faces can ve stored for different elements.
 
         def _compute_fpts(i_begin, i_end, upts, fpts):
             # Copy upts to fpts
@@ -138,6 +143,10 @@ class GradElements(BaseElements,  gradFluidElements):
         snorm_mag = self._mag_snorm_fpts
         snorm_vec = np.rollaxis(self._vec_snorm_fpts, 2)
         vol       = self._vol
+
+        # The main consideretion of impelentation of green gauss cell based method is that how to reach face values of
+        # concidend faces. After spending some time in the solver, i decided that _make_avgu methods finds the avarage
+        # values on the faces, and updates the fpts accordingly.
 
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwise loop starts here
