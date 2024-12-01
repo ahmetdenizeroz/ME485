@@ -119,10 +119,19 @@ class GradElements(BaseElements,  gradFluidElements):
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwiseloop
             for i in range(i_begin, i_end):
-                # **************************#
-                #Complete
-                # **************************#
-                # Compile the function
+                for l in range(nvars):  # Loop over variables
+                    # Extract the operator (A matrix) for the current element
+                    A = op[:, :, i]  # Shape: (Nfaces, Ndims)
+
+                    # Construct b vector for the current variable and element
+                    # b = phi_f - phi_center
+                    phi_f = fpts[:, l, i]  # Shape: (Nfaces,)
+                    phi_center = self.upts[l, i]  # Use `upts` for the central value
+                    b = phi_f - phi_center  # Shape: (Nfaces,)
+
+                    # Solve for the gradient: grad = (A^T A)^-1 A^T b
+                    # Using np.linalg.lstsq for least-squares solution
+                    grad[:, l, i], *_ = np.linalg.lstsq(A, b, rcond=None)
         return self.be.make_loop(self.neles, _cal_grad)    
 #-------------------------------------------------------------------------------#
     def _make_grad_gg(self):
@@ -131,56 +140,29 @@ class GradElements(BaseElements,  gradFluidElements):
         snorm_mag = self._mag_snorm_fpts
         snorm_vec = np.rollaxis(self._vec_snorm_fpts, 2)
         vol       = self._vol
-        r_centroid = self._r_centroid  # Element centroids
-        r_face = self._r_face  # Face positions
 
         def _cal_grad(i_begin, i_end, fpts, grad):
-            max_iter = 10  # Maximum iterations for convergence
-            tol = 1e-6  # Tolerance for convergence
-
             for i in range(i_begin, i_end):  # Loop through elements
                 for l in range(nvars):  # Loop through variables
                     grad_val = np.zeros(ndims)  # Initialize gradient vector
-                    phi_face = np.zeros(nface)  # Initialize face values
-
-                    # Step 1: Initial midpoint method for face values
+                
+                    # Compute face-centered values using midpoint formula
                     for f in range(nface):
                         adj_elem = self.get_adjacent_element(i, f)  # Get adjacent element index
                         if adj_elem is not None:
-                            phi_face[f] = 0.5 * (fpts[f, l, i] + fpts[f, l, adj_elem])
+                            # Weighted average with w_ef = 0.5
+                            phi_f = 0.5 * (fpts[f, l, i] + fpts[f, l, adj_elem])
                         else:
-                            phi_face[f] = fpts[f, l, i]  # Boundary face
+                            # Boundary face: use only the local element value
+                            phi_f = fpts[f, l, i]
 
-                    # Step 2: Iterative correction
-                    for k in range(max_iter):
-                        phi_face_new = np.copy(phi_face)
-                        for f in range(nface):
-                            adj_elem = self.get_adjacent_element(i, f)
-                            if adj_elem is not None:
-                                r_e = r_centroid[:, i]
-                                r_ef = r_centroid[:, adj_elem]
-                                r_f = r_face[:, f]
-
-                                grad_e = grad[:, l, i]
-                                grad_ef = grad[:, l, adj_elem]
-
-                                correction = 0.5 * (grad_e + grad_ef) @ (r_f - 0.5 * (r_e + r_ef))
-                                phi_face_new[f] = phi_face[f] + correction
-
-                        # Check for convergence
-                        if np.linalg.norm(phi_face_new - phi_face) < tol:
-                            break
-                        phi_face = phi_face_new
-
-                    # Step 3: Compute the Green-Gauss gradient
-                    for f in range(nface):
+                        # Accumulate the gradient contributions
                         for d in range(ndims):
-                            grad_val[d] += phi_face[f] * snorm_vec[f, d, i] * snorm_mag[f, i]
+                            grad_val[d] += phi_f * snorm_vec[f, d, i] * snorm_mag[f, i]
 
-                    # Normalize by volume
+                    # Normalize by volume to get the gradient
                     for d in range(ndims):
                         grad[d, l, i] = grad_val[d] / vol[i]
-
 
         return self.be.make_loop(self.neles, _cal_grad)      
 
@@ -212,16 +194,44 @@ class GradElements(BaseElements,  gradFluidElements):
     # @fc.lru_cache()
     # @chop
     def _grad_operator(self):
-        # Difference of displacement vector (cell to cell)
-        # (Nfaces, Nelements, dim) -> (dim, Nfaces, Nelements)
-        dxc = np.rollaxis(self.dxc, 2)
-        # (Nfaces, Nelements)
-        distance = np.linalg.norm(dxc, axis=0)
+    
+        # Get necessary attributes
+        ndims = self.ndims       # Number of spatial dimensions
+        nface = self.nface       # Number of faces per element
+        neles = self.neles       # Total number of elements
+        phi = self.upts_in       # Primitive variable values at element centers
+        dxc = np.rollaxis(self.dxc, 2)  # Rearrange axes (Nelements, Nfaces, Ndims)
 
+        # Precompute distances
+        distance = np.linalg.norm(dxc, axis=-1)  # (Nelements, Nfaces) !!! Orjinalinde axis = 0 vermiş 
 
-        # **************************#
-        #Complete
-        # **************************#
+        # Create gradient operator matrix
+        op = np.zeros((ndims, nface, neles))  # Placeholder
+
+        # Loop over elements
+        for e0 in range(neles):
+            # Collect neighbors' displacement vectors and distances
+            rel_pos = dxc[e0]  # Shape: (Nfaces, Ndims)
+            dist = distances[e0]  # Shape: (Nfaces,)
+
+            # Collect variable differences
+            phi_e0 = phi[e0]
+            phi_neighbors = self.get_neighbors_phi(e0)  # Fetch variable values at neighbors
+            b = phi_neighbors - phi_e0  # Shape: (Nfaces,)
+
+            # Construct weight matrix if weighted LS is used
+            p = 1  # Default p=0
+            if p > 0:
+                W = np.diag(1.0 / dist**p)
+                A = rel_pos
+                x = np.linalg.inv(A.T @ W @ A) @ (A.T @ W @ b)
+            else:
+                A = rel_pos
+                x = np.linalg.inv(A.T @ A) @ (A.T @ b)
+
+            # Store computed gradient
+            op[:, :, e0] = x.reshape((ndims, -1))
+
         return op
 
     def _make_post(self):
