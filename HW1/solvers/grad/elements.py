@@ -146,10 +146,11 @@ class GradElements(BaseElements,  gradFluidElements):
         
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwiseloop
-            grad_forelement = []
+            
+            grad = []
             for element_index in range(i_begin, i_end):  #Loop over elements
                 # **************************#
-
+                grad_forelement = []
                 for variable_index in range(nvars):  #Loop over variables
 
                     A = []
@@ -170,7 +171,9 @@ class GradElements(BaseElements,  gradFluidElements):
                     #The arrays are combined and a matrix is created. 
                     #Rows are faces, columns are dimensional pos. differences.
 
-                grad_forelement() = np.linalg.inv(np.transpose(A) * A ) * np.transpose(A) * b
+                grad_forelement = np.append(grad_forelement, np.linalg.inv(np.transpose(A) * A ) * np.transpose(A) * b, axis = 0)
+            
+            grad = np.append(grad, grad_forelement, axis = 2)
 
                 # **************************#
 
