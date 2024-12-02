@@ -109,15 +109,22 @@ class GradElements(BaseElements,  gradFluidElements):
         # FPTS is an array containing face values. It's sahepe is (nface, nvars, nelemets), menaing that
         # it can store face values of every variable for every element, for numbe of face times. Meaning that
         # different values of coincident faces can ve stored for different elements.
+        # ade
 
         def _compute_fpts(i_begin, i_end, upts, fpts):
             # Copy upts to fpts
-            #print(fpts)
+            #print(np.shape(fpts))
             for idx in range(i_begin, i_end):
                 for j in range(nvars):
                     for face in range(nface):
-                        #fpts[face][j][idx] = upts[0, j, idx]
-                        fpts[face][idx] = upts[0, idx]
+                        #print("shape", np.shape(fpts))
+                        #print("fpts", fpts)
+                        #print("index element value", fpts[face][j][idx])
+                        #print("shape upts", np.shape(upts))
+
+                        fpts[face][j][idx] = upts[j, idx]
+                        
+
         return self.be.make_loop(self.neles, _compute_fpts)
 
 #-------------------------------------------------------------------------------#
@@ -126,17 +133,20 @@ class GradElements(BaseElements,  gradFluidElements):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         # Gradient operator 
         op = self._grad_operator
+        #print("pleaseee", type(op))
 
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwiseloop
+            # print("op", type(op))
             for i in range(i_begin, i_end):
                 for variable in range(nvars):
                     b = np.zeros((nface, 1))
-                    for face in range(nface):
-                        b[face] = fpts[face, variable, i]
-                    gradtemp = op[i] @ b
                     for dimension in range(ndims):
-                        grad[dimension, variable, i] = gradtemp[dimension]
+                        tot = 0
+                        for face in range(nface):
+                            tot += fpts[face, variable, i] * op[dimension, face, i] 
+                        grad[dimension, variable, i] = tot
+
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)
 
@@ -201,7 +211,12 @@ class GradElements(BaseElements,  gradFluidElements):
         # only possible use of distance is for weighted ls.
         distance = np.linalg.norm(dxc, axis=0)
 
-        # we need p value assignment for determining the weight, it will be taken as 2 for now.
+        # Normal vector and volume
+        snorm_mag = self._mag_snorm_fpts
+        snorm_vec = np.rollaxis(self._vec_snorm_fpts, 2)
+        vol = self._vol
+
+        # we need value assignment for determining the weight, it will be taken as 2 for now.
         # with examination of code, a little help is taken from base\elements.py
         p = 2
         w = 1
@@ -209,13 +224,19 @@ class GradElements(BaseElements,  gradFluidElements):
         if self._grad_method == 'least-square':
             w = 1.0
         elif self._grad_method == 'weighted-least-square':
-            w = 1 / (distance**p)
+            beta, w = 1.0, 1 / (distance**p)
+        elif self._grad_method == "green-gauss-node":
+            beta, w = 0.0, 1.0
+        else:
+            raise ValueError("Invalid gradient method: ", self._grad_method)
 
         # Scaled dxc vector
         dxcs = dxc*np.sqrt(w)
-
+        
+        """
         # Creating empty array for operator storage
         op = np.empty(self.neles, dtype=object)
+        #print("op", type(op))
         for element in range(self.neles):
             A = np.zeros((self.nface, self.ndims))
             for face in range(self.nface):
@@ -223,7 +244,28 @@ class GradElements(BaseElements,  gradFluidElements):
                     A[face][dimension] = dxcs[dimension][face][element]
             AT = np.transpose(A)
             mult = np.dot(AT , A)
-            op[element] = np.linalg.inv(mult) @ AT
+            inv = np.linalg.inv(mult)
+            final = np.dot(inv, AT)
+            #print(self.nface)
+            #print("operator", final)
+            op[element] = final
+        #print("number of dims", self.ndims)
+        print("op shape", np.shape(op))
+        #print("op type", type(op))
+        """
+        
+        # Least square matrix [dx*dy] and its inverse
+        lsq = np.array([[np.einsum('ij,ij->j', x, y)
+                         for y in dxcs] for x in dxcs])
+
+        # Hybrid type of Ax=b
+        A = beta*lsq + 2*(1-beta)*vol*np.eye(self.ndims)[:,:,None]
+        b = beta*dxc*w + 2*(1-beta)*0.5*snorm_vec*snorm_mag
+
+        # Solve Ax=b
+        op = np.linalg.solve(np.rollaxis(A, axis=2), np.rollaxis(b, axis=2)).transpose(1,2,0)
+        print("op shape", np.shape(op))
+        
 
         return op
 

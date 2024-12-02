@@ -17,6 +17,7 @@ class GradIntInters(BaseIntInters):
         self.compute_avgu = Kernel(self._make_avgu(), *fpts)
 
     def _make_delu(self):
+        print("_make_delu for INT")
         nvars = self.nvars
         lt, le, lf = self._lidx
         rt, re, rf = self._ridx
@@ -29,14 +30,18 @@ class GradIntInters(BaseIntInters):
                 for variable in range(nvars):
                     ul = uf[lti][lfi, variable, lei]
                     ur = uf[rti][rfi, variable, rei]
+
                     uface = ur-ul
+
                     #TODO: Check validity of following two lines
+
                     uf[lti][lfi, variable, lei] = uface
                     uf[rti][rfi, variable, rei] = uface
 
         return self.be.make_loop(self.nfpts, compute_delu)
 
     def _make_avgu(self):
+        print("_make_avgu for INT")
         nvars = self.nvars
         lt, le, lf = self._lidx
         rt, re, rf = self._ridx
@@ -88,6 +93,7 @@ class GradBCInters(BaseBCInters):
         self.compute_avgu = Kernel(self._make_avgu(), *fpts)
 
     def _make_delu(self):
+        print("_make_delu for BC")
         nvars = self.nvars
         lt, le, lf = self._lidx
         nf = self._vec_snorm
@@ -112,6 +118,7 @@ class GradBCInters(BaseBCInters):
 
 
     def _make_avgu(self):
+        print("_make_avgu for BC")
         nvars = self.nvars
         lt, le, lf = self._lidx
         nf = self._vec_snorm
