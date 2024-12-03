@@ -100,16 +100,38 @@ class GradElements(BaseElements,  gradFluidElements):
 
         # **************************#
         equation = self.cfg.get("soln-ics", "q")
+        position = self.xc
+        exact_grad = np.zeros((ndims, nvars, neles))
+        for variable in range(nvars):
+            for element in range(neles):
+                x = position[element][0]
+                y = position[element][1]
+                tempgradx = 2 * x
+                tempgrady = 2 * y
+                exact_grad[0][variable][element] = tempgradx
+                exact_grad[1][variable][element] = tempgrady
+
+        diff = self.grad - exact_grad
+        squared_diff = np.square(diff)
+        square_volumed = np.zeros((ndims, nvars, neles))
+        squared_sum = np.zeros((ndims, nvars))
+
+        for variable in range(nvars):
+            for dimension in range(ndims):
+                for element in range(neles):
+                    square_volumed[dimension, variable, element] = squared_diff[dimension, variable, element] * vol[element]
+                squared_sum[dimension, variable] = np.sum(square_volumed[dimension][variable])
+
+        L2 = np.sqrt(squared_sum)
+
         #print("equation", equation)
-        #print("grad is", self.grad)
         #print("dxc", self.dxc)
-        
-        #for element in range(neles):
-        #    totvol += vol[element] 
-        resid = 1
+        #print("exact grad", exact_grad)
+        #print("grad is", self.grad)
+        #print("diff", self.grad - exact_grad)
         # **************************#
 
-        return resid
+        return L2
 
 #-------------------------------------------------------------------------------#
     # Assign cell centers values to face centers
@@ -155,7 +177,7 @@ class GradElements(BaseElements,  gradFluidElements):
                     for dimension in range(ndims):
                         tot = 0
                         for face in range(nface):
-                            tot += fpts[face, variable, i] * op[dimension, face, i] 
+                            tot += fpts[face, variable, i] * op[dimension, face, i]
                         grad[dimension, variable, i] = tot
 
         # Compile the function
@@ -183,7 +205,8 @@ class GradElements(BaseElements,  gradFluidElements):
                 for dimension in range(ndims):
                     RHS = 0
                     for face in range(nface):
-                        RHS += fpts[face, 0, i] * snorm_vec[dimension, face, i] * snorm_mag[face, i]
+                        for variable in range(nvars):
+                            RHS += fpts[face, variable, i] * snorm_vec[dimension, face, i] * snorm_mag[face, i]
 
                     #print("value", (1/vol) * RHS)
                     #print("volume", vol)
@@ -244,7 +267,7 @@ class GradElements(BaseElements,  gradFluidElements):
         w = 1
 
         if self._grad_method == 'least-square':
-            w = 1.0
+            beta, w = 1.0, 1.0
         elif self._grad_method == 'weighted-least-square':
             beta, w = 1.0, 1 / (distance**p)
         elif self._grad_method == "green-gauss-cell":
