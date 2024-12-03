@@ -136,6 +136,7 @@ class GradBCInters(BaseBCInters):
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
                 ul = uf[lti][lfi, :, lei]
                 bc(ul, ur, nfi)
+                #print("ur bc avgu", ur)
                 for variable in range(nvars):
                     uface = 0.5 * ul[variable] + 0.5 * ur[variable]
                     uf[lti][lfi, variable, lei] = uface

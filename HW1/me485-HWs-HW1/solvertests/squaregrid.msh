@@ -3,7 +3,7 @@ $MeshFormat
 $EndMeshFormat
 $PhysicalNames
 2
-1 11 "inner"
+1 11 "outer"
 2 13 "fluid"
 $EndPhysicalNames
 $Entities

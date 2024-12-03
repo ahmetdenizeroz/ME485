@@ -44,7 +44,7 @@ class GradElements(BaseElements,  gradFluidElements):
         self.nfvars = self.nvars
         self._const = cfg.items('constants')
         self._grad_method = cfg.get('solver', 'gradient')
-        # print(self.dxv)
+        print("eles", eles)
 
     def construct_kernels(self, vertex, nreg, impl_op=0):
         self.vertex = vertex
@@ -93,14 +93,20 @@ class GradElements(BaseElements,  gradFluidElements):
  #-------------------------------------------------------------------------------#
     def compute_L2_norm(self):
         print("compute_L2_norm")
-        nvars, nface, ndims = self.nvars, self.nface, self.nvars
+        # nface changed to neles since nface is not necessary in l2 norm calculation
+        nvars, neles, ndims = self.nvars, self.neles, self.ndims
         vol                 = self._vol
+        totvol = 0
 
         # **************************#
-        resid = 1
         equation = self.cfg.get("soln-ics", "q")
-        print("equation", equation)
-        print("grad is", self.grad)
+        #print("equation", equation)
+        #print("grad is", self.grad)
+        #print("dxc", self.dxc)
+        
+        #for element in range(neles):
+        #    totvol += vol[element] 
+        resid = 1
         # **************************#
 
         return resid
