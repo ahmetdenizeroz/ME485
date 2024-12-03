@@ -31,11 +31,11 @@ class GradIntInters(BaseIntInters):
                     ul = uf[lti][lfi, variable, lei]
                     ur = uf[rti][rfi, variable, rei]
 
-                    uface = ur-ul
+                    uface = ul-ur
 
                     #TODO: Check validity of following two lines
 
-                    uf[lti][lfi, variable, lei] = uface
+                    uf[lti][lfi, variable, lei] = -uface
                     uf[rti][rfi, variable, rei] = uface
             #print("delu INT uf", uf)
 

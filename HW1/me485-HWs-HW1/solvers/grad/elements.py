@@ -123,6 +123,7 @@ class GradElements(BaseElements,  gradFluidElements):
                 squared_sum[dimension, variable] = np.sum(square_volumed[dimension][variable])
 
         L2 = np.sqrt(squared_sum)
+        #L2 = np.linalg.norm(self.grad, ord=2, axis=2, keepdims=False)
 
         #print("equation", equation)
         #print("dxc", self.dxc)
@@ -173,7 +174,7 @@ class GradElements(BaseElements,  gradFluidElements):
             # print("op", type(op))
             for i in range(i_begin, i_end):
                 for variable in range(nvars):
-                    b = np.zeros((nface, 1))
+                    #b = np.zeros((nface, 1))
                     for dimension in range(ndims):
                         tot = 0
                         for face in range(nface):
