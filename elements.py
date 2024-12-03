@@ -2,10 +2,10 @@
 import numpy as np
 import re
 
-from solvers.base import BaseElements
+from solvers.base import BaseElements, BaseIntInters
 from backends.types import ArrayBank, Kernel, NullKernel
 from utils.np import eps, chop, npeval
-
+from solvers.grad.inters import GradIntInters
 
 class gradFluidElements:
     @property
@@ -43,8 +43,37 @@ class GradElements(BaseElements,  gradFluidElements):
         self.nfvars = self.nvars
         self._const = cfg.items('constants')
         self._grad_method = cfg.get('solver', 'gradient')
-        # print(self.dxv)
+        
+        # Assuming lhs and rhs are determined somewhere or passed to the constructor
+        # You need to pass the correct `lhs` and `rhs` for the face connectivity
+        lhs = self._generate_lhs(eles)  # Method to generate lhs (list of element-face-point tuples)
+        rhs = self._generate_rhs(eles)  # Method to generate rhs (list of element-face-point tuples)
+        
+        # Create an instance of GradIntInters, passing lhs and rhs
+        self.grad_int_inters = GradIntInters(be, cfg, eles, lhs, rhs)  # Initialize with lhs and rhs
+        
+    def _generate_lhs(self, eles):
+        # Generate the lhs list of element-face-point tuples based on the provided elements
+        lhs = []
+        for ele in eles:
+            # Create a tuple for each element, face, and point combination (example)
+            for face in ele.faces:
+                for point in face.points:
+                    lhs.append((ele.type, ele.id, face.id, point.id))
+        return lhs
 
+    def _generate_rhs(self, eles):
+        # Generate the rhs list of element-face-point tuples, which should be computed
+        # based on the neighboring element's faces or some other criteria
+        rhs = []
+        for ele in eles:
+            # Assuming rhs is similar to lhs but involves neighboring elements or different logic
+            for face in ele.neighbors:
+                for point in face.points:
+                    rhs.append((ele.type, ele.id, face.id, point.id))
+        return rhs        
+        
+    
     def construct_kernels(self, vertex, nreg, impl_op=0):
         self.vertex = vertex
 
@@ -86,11 +115,33 @@ class GradElements(BaseElements,  gradFluidElements):
     def compute_L2_norm(self):
         nvars, nface, ndims = self.nvars, self.nface, self.ndims
         vol                 = self._vol
-        # **************************#
+        upts = self.upts_in  # Computed solution at each element
 
-        #Complete
+        # Define the exact solution function
+        def exact_solution(x):
+            # Example: quadratic solution x^2 (for a single variable case)
+            return x**2
 
-        # **************************#
+        # Compute the exact solution at the element centers
+        exact_upts = np.zeros_like(upts)
+        for i in range(upts.shape[-1]):  # Loop over elements
+            # Assuming `xc` contains the coordinates of element centers
+            x = self.xc[:, i]  # Element center coordinates
+            exact_upts[:, i] = exact_solution(x)
+
+        # Compute the squared error
+        squared_error = np.zeros(upts.shape[-1])  # One error per element
+        for i in range(upts.shape[-1]):  # Loop over elements
+            for l in range(nvars):  # Loop over variables
+                squared_error[i] += np.sum((exact_upts[l, i] - upts[l, i])**2)
+
+        # Weight by volume and compute the total L2 error
+        weighted_error = squared_error * vol
+        total_error = np.sum(weighted_error)
+
+        # Normalize by total volume
+        total_volume = np.sum(vol)
+        resid = np.sqrt(total_error / total_volume)
 
         return resid
 
@@ -132,7 +183,7 @@ class GradElements(BaseElements,  gradFluidElements):
                     # Solve for the gradient: grad = (A^T A)^-1 A^T b
                     # Using np.linalg.lstsq for least-squares solution
                     grad[:, l, i], *_ = np.linalg.lstsq(A, b, rcond=None)
-        return self.be.make_loop(self.neles, _cal_grad)    
+        return self.be.make_loop(self.neles, _cal_grad)       
 #-------------------------------------------------------------------------------#
     def _make_grad_gg(self):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
@@ -140,7 +191,11 @@ class GradElements(BaseElements,  gradFluidElements):
         snorm_mag = self._mag_snorm_fpts
         snorm_vec = np.rollaxis(self._vec_snorm_fpts, 2)
         vol       = self._vol
-
+        # Precompute face averages and differences
+        avgu = self.grad_int_inters.compute_avgu
+        delu = self.grad_int_inters.compute_delu
+     
+        
         def _cal_grad(i_begin, i_end, fpts, grad):
             for i in range(i_begin, i_end):  # Loop through elements
                 for l in range(nvars):  # Loop through variables
@@ -148,13 +203,8 @@ class GradElements(BaseElements,  gradFluidElements):
                 
                     # Compute face-centered values using midpoint formula
                     for f in range(nface):
-                        adj_elem = self.get_adjacent_element(i, f)  # Get adjacent element index
-                        if adj_elem is not None:
-                            # Weighted average with w_ef = 0.5
-                            phi_f = 0.5 * (fpts[f, l, i] + fpts[f, l, adj_elem])
-                        else:
-                            # Boundary face: use only the local element value
-                            phi_f = fpts[f, l, i]
+                        # Fetch precomputed averaged face value (phi_f) Note that w = 0.5
+                        phi_f = avgu[f, l, i]
 
                         # Accumulate the gradient contributions
                         for d in range(ndims):
@@ -164,7 +214,7 @@ class GradElements(BaseElements,  gradFluidElements):
                     for d in range(ndims):
                         grad[d, l, i] = grad_val[d] / vol[i]
 
-        return self.be.make_loop(self.neles, _cal_grad)      
+        return self.be.make_loop(self.neles, _cal_grad)          
 
 #-------------------------------------------------------------------------------#
     def _make_recon(self):
