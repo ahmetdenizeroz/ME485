@@ -51,6 +51,8 @@ class GradElements(BaseElements,  gradFluidElements):
 
         # Upts : Solution vector
         self.upts = upts = [self._ics.copy() for i in range(nreg)]
+        #print("upts", upts)
+        #print("upts shape", np.shape(upts))
         del(self._ics)
 
         # Solution vector bank and assign upts index
@@ -62,8 +64,8 @@ class GradElements(BaseElements,  gradFluidElements):
         # Construct arrays for flux points, dt and derivatives of source term
         self.fpts = fpts = np.empty((self.nface, self.nvars, self.neles))
         self.grad = grad = np.zeros((self.ndims, self.nvars, self.neles))
-        #print(np.shape(fpts))
-        #print(np.shape(fpts))
+        #print("fpts shape", np.shape(fpts))
+        #print("fpts", fpts)
 
         lim = np.ones((self.nvars, self.neles))
 
@@ -96,6 +98,9 @@ class GradElements(BaseElements,  gradFluidElements):
 
         # **************************#
         resid = 1
+        equation = self.cfg.get("soln-ics", "q")
+        print("equation", equation)
+        print("grad is", self.grad)
         # **************************#
 
         return resid
@@ -121,9 +126,9 @@ class GradElements(BaseElements,  gradFluidElements):
                         #print("fpts", fpts)
                         #print("index element value", fpts[face][j][idx])
                         #print("shape upts", np.shape(upts))
-
                         fpts[face][j][idx] = upts[j, idx]
                         
+            #print("fpts after _make_compute_fpts", fpts)
 
         return self.be.make_loop(self.neles, _compute_fpts)
 
@@ -165,12 +170,23 @@ class GradElements(BaseElements,  gradFluidElements):
 
         def _cal_grad(i_begin, i_end, fpts, grad):
             # Elementwise loop starts here
+
+            #print("fpts in gg grad", fpts)
+
             for i in range(i_begin, i_end):
                 for dimension in range(ndims):
                     RHS = 0
                     for face in range(nface):
                         RHS += fpts[face, 0, i] * snorm_vec[dimension, face, i] * snorm_mag[face, i]
-                    grad[dimension, 0, i] = (1/vol) * RHS
+
+                    #print("value", (1/vol) * RHS)
+                    #print("volume", vol)
+                    #print("grad shape", np.shape(grad))
+                    #print("grad element", grad[dimension, 0, i])
+
+                    grad[dimension, 0, i] = (1/vol[i]) * RHS
+
+            #print("gg grad", grad)
 
         # Compile the function
         return self.be.make_loop(self.neles, _cal_grad)      
@@ -225,7 +241,7 @@ class GradElements(BaseElements,  gradFluidElements):
             w = 1.0
         elif self._grad_method == 'weighted-least-square':
             beta, w = 1.0, 1 / (distance**p)
-        elif self._grad_method == "green-gauss-node":
+        elif self._grad_method == "green-gauss-cell":
             beta, w = 0.0, 1.0
         else:
             raise ValueError("Invalid gradient method: ", self._grad_method)
@@ -265,6 +281,7 @@ class GradElements(BaseElements,  gradFluidElements):
         # Solve Ax=b
         op = np.linalg.solve(np.rollaxis(A, axis=2), np.rollaxis(b, axis=2)).transpose(1,2,0)
         print("op shape", np.shape(op))
+        print("op", op)
         
 
         return op

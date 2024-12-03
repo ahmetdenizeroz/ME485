@@ -37,6 +37,7 @@ class GradIntInters(BaseIntInters):
 
                     uf[lti][lfi, variable, lei] = uface
                     uf[rti][rfi, variable, rei] = uface
+            #print("delu INT uf", uf)
 
         return self.be.make_loop(self.nfpts, compute_delu)
 
@@ -60,6 +61,7 @@ class GradIntInters(BaseIntInters):
                     #TODO: Check validity of following two lines
                     uf[lti][lfi, variable, lei] = uface
                     uf[rti][rfi, variable, rei] = uface
+            #print("avgu INT uf", uf)
 
         return self.be.make_loop(self.nfpts, compute_avgu)
 
@@ -113,6 +115,7 @@ class GradBCInters(BaseBCInters):
                 for variable in range(nvars):
                     uface = ur[variable] - ul[variable]
                     uf[lti][lfi, variable, lei] = uface
+            #print("Delu BC uf", uf)
 
         return self.be.make_loop(self.nfpts, compute_delu)
 
@@ -136,6 +139,7 @@ class GradBCInters(BaseBCInters):
                 for variable in range(nvars):
                     uface = 0.5 * ul[variable] + 0.5 * ur[variable]
                     uf[lti][lfi, variable, lei] = uface
+            #print("avgu BC uf", uf)
 
         return self.be.make_loop(self.nfpts, compute_avgu)
 
