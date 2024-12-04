@@ -44,7 +44,7 @@ class GradElements(BaseElements,  gradFluidElements):
         self.nfvars = self.nvars
         self._const = cfg.items('constants')
         self._grad_method = cfg.get('solver', 'gradient')
-        print("eles", eles)
+        #print("eles", eles)
 
     def construct_kernels(self, vertex, nreg, impl_op=0):
         self.vertex = vertex
@@ -96,7 +96,6 @@ class GradElements(BaseElements,  gradFluidElements):
         # nface changed to neles since nface is not necessary in l2 norm calculation
         nvars, neles, ndims = self.nvars, self.neles, self.ndims
         vol                 = self._vol
-        totvol = 0
 
         # **************************#
         equation = self.cfg.get("soln-ics", "q")
@@ -106,12 +105,12 @@ class GradElements(BaseElements,  gradFluidElements):
             for element in range(neles):
                 x = position[element][0]
                 y = position[element][1]
-                tempgradx = 2 * x
-                tempgrady = 2 * y
+                tempgradx = x / ((x*x + y*y)**0.5)
+                tempgrady = y / ((x*x + y*y)**0.5)
                 exact_grad[0][variable][element] = tempgradx
                 exact_grad[1][variable][element] = tempgrady
 
-        diff = self.grad - exact_grad
+        diff = exact_grad - self.grad
         squared_diff = np.square(diff)
         square_volumed = np.zeros((ndims, nvars, neles))
         squared_sum = np.zeros((ndims, nvars))
@@ -124,6 +123,7 @@ class GradElements(BaseElements,  gradFluidElements):
 
         L2 = np.sqrt(squared_sum)
         #L2 = np.linalg.norm(self.grad, ord=2, axis=2, keepdims=False)
+        print("total volume", np.sum(vol))
 
         #print("equation", equation)
         #print("dxc", self.dxc)
@@ -310,8 +310,8 @@ class GradElements(BaseElements,  gradFluidElements):
 
         # Solve Ax=b
         op = np.linalg.solve(np.rollaxis(A, axis=2), np.rollaxis(b, axis=2)).transpose(1,2,0)
-        print("op shape", np.shape(op))
-        print("op", op)
+        #print("op shape", np.shape(op))
+        #print("op", op)
         
 
         return op

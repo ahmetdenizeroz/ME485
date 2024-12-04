@@ -137,9 +137,9 @@ class GradBCInters(BaseBCInters):
                 ul = uf[lti][lfi, :, lei]
                 bc(ul, ur, nfi)
                 #print("ur bc avgu", ur)
-                for variable in range(nvars):
-                    uface = 0.5 * ul[variable] + 0.5 * ur[variable]
-                    uf[lti][lfi, variable, lei] = uface
+                #for variable in range(nvars):
+                uface = 0.5 * ul[0] + 0.5 * ur[0]
+                uf[lti][lfi, :, lei] = uface
             #print("avgu BC uf", uf)
 
         return self.be.make_loop(self.nfpts, compute_avgu)
