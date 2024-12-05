@@ -111,24 +111,28 @@ class GradElements(BaseElements,  gradFluidElements):
                 exact_grad[1][variable][element] = tempgrady
 
         diff = exact_grad - self.grad
-        squared_diff = np.square(diff)
-        square_volumed = np.zeros((ndims, nvars, neles))
+        #squared_diff = np.square(diff)
+        #square_volumed = np.zeros((ndims, nvars, neles))
+        diff_volumed = np.zeros((ndims, nvars, neles))
         squared_sum = np.zeros((ndims, nvars))
 
         for variable in range(nvars):
             for dimension in range(ndims):
                 for element in range(neles):
-                    square_volumed[dimension, variable, element] = squared_diff[dimension, variable, element] * vol[element]
+                    #square_volumed[dimension, variable, element] = squared_diff[dimension, variable, element] * vol[element]
+                    diff_volumed[dimension, variable, element] = diff[dimension, variable, element] * vol[element]
+                square_volumed = np.square(diff_volumed)
                 squared_sum[dimension, variable] = np.sum(square_volumed[dimension][variable])
 
         L2 = np.sqrt(squared_sum)
         #L2 = np.linalg.norm(self.grad, ord=2, axis=2, keepdims=False)
-        print("total volume", np.sum(vol))
+        #print("total volume", np.sum(vol))
 
         #print("equation", equation)
         #print("dxc", self.dxc)
         #print("exact grad", exact_grad)
         #print("grad is", self.grad)
+        print("diff", diff)
         #print("diff", self.grad - exact_grad)
         # **************************#
 
