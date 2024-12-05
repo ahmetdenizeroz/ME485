@@ -7,9 +7,9 @@ gmsh.initialize(sys.argv)
 
 # Next add a new model named "cavity" 
 gmsh.model.add("mixed")
-#lc = 0.25
+lc = 0.25
 # for finer meshes
-lc = 0.01
+#lc = 0.01
 
 #Points
 p1  = gmsh.model.geo.addPoint(0.0, 0.0, 0.0, lc);
@@ -92,7 +92,7 @@ gmsh.model.geo.mesh.setTransfiniteCurve(l14, 10)
 gmsh.model.geo.mesh.setTransfiniteCurve(l15, 10)
 gmsh.model.geo.mesh.setTransfiniteCurve(l16, 10)
 '''
-la = int(1/lc)
+la = 10 # int(1/lc)
 gmsh.model.geo.mesh.setTransfiniteCurve(l5, la)
 gmsh.model.geo.mesh.setTransfiniteCurve(l6, la)
 gmsh.model.geo.mesh.setTransfiniteCurve(l7, la)
