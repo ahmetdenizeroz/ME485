@@ -114,10 +114,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         #*************************# 
         # compute L2 norm in this function
         # upts is the solution field
-
-
-
-
+            norm = 5
         #*************************# 
 
             return norm
@@ -128,16 +125,17 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
     def _make_compute_fpts(self):
         #*************************# 
         # get required data here
+        nface, neles, nvars = self.nface, self.neles, self.nvars
         #*************************# 
         def _compute_fpts(i_begin, i_end, upts, fpts):
-        #*************************# 
-        # Complete function
-        # upts: array holding cell center values
-        # fpts: array holding face values
-
-
-
-
+            #*************************#
+            # Complete function
+            # upts: array holding cell center values
+            # fpts: array holding face values
+            for element in range(neles):
+                for face in range(nface):
+                    for variable in range(nvars):
+                        fpts[face, variable, element] = upts[variable, element]
         #*************************# 
             
         
