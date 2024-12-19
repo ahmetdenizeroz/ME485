@@ -87,16 +87,11 @@ class ParabolicIntInters(BaseIntInters):
             du    = uf[:nele]
             for idx in range(i_begin, i_end):
                 #*************************# 
-                # Complete function
-            
-
+                print("_make_flux_INT")
                 #*************************# 
-                
 
-
-
-                    uf[lti][lfi, jdx, lei] =  fn[jdx]
-                    uf[rti][rfi, jdx, rei] = -fn[jdx]
+                    #uf[lti][lfi, jdx, lei] =  fn[jdx]
+                    #uf[rti][rfi, jdx, rei] = -fn[jdx]
 
         return self.be.make_loop(self.nfpts, comm_flux)
 
@@ -115,13 +110,15 @@ class ParabolicIntInters(BaseIntInters):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
             gradu = uf[nele:]
-
+            print("uf", uf)
+            print("du", du)
+            print("gradu", gradu)
             for idx in range(i_begin, i_end):
-            #*************************# 
-            # Complete function
-            
-
-            #*************************# 
+                #*************************#
+                # Complete function
+                #gradf[:, variable,]
+                a = 5
+                #*************************#
 
         return self.be.make_loop(self.nfpts, grad_at)
 
@@ -222,8 +219,7 @@ class ParabolicBCInters(BaseBCInters):
             for idx in range(i_begin, i_end):
                 #*************************# 
                 # Complete function
-            
-
+                print("_make_flux_BC")
                 #*************************# 
                 
         return self.be.make_loop(self.nfpts, comm_flux)
@@ -249,8 +245,7 @@ class ParabolicBCInters(BaseBCInters):
             for idx in range(i_begin, i_end):
                #*************************# 
                # Complete function
-            
-
+                print("_make_grad_at_face_BC")
                #*************************# 
 
         return self.be.make_loop(self.nfpts, grad_at)

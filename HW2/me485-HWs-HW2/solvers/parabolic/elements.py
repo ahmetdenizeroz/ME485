@@ -106,17 +106,13 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         #*************************# 
         # get required data here
 
-
-
-
         #*************************# 
         def run(upts):
         #*************************# 
         # compute L2 norm in this function
         # upts is the solution field
             norm = 5
-        #*************************# 
-
+        #*************************#
             return norm
 
         return self.be.compile(run, outer=True)
@@ -137,8 +133,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                     for variable in range(nvars):
                         fpts[face, variable, element] = upts[variable, element]
         #*************************# 
-            
-        
+
         return self.be.make_loop(self.neles, _compute_fpts)
 
 #-------------------------------------------------------------------------------#
@@ -147,14 +142,16 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         # Gradient operator 
         op = self._prelsq
         def _cal_grad(i_begin, i_end, fpts, grad):
-        #*************************# 
-        # Complete function
-        # grad: array holding cell center gradient values
-        # fpts: array holding face values
-
-        #*************************# 
-
-
+            #*************************#
+            # Complete function
+            # grad: array holding cell center gradient values
+            # fpts: array holding face values
+            #*************************#
+            for element in range(i_begin, i_end):
+                for variable in range(nvars):
+                    for face in range(nface):
+                        grad[:,variable,element] += op[element, face, :] * fpts[face, variable, element]
+            print ("grad", grad)
         # Compile the numba function
         return self.be.make_loop(self.neles, _cal_grad)   
 
