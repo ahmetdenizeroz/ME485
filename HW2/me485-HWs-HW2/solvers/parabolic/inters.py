@@ -110,16 +110,29 @@ class ParabolicIntInters(BaseIntInters):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
             gradu = uf[nele:]
-            print("uf", uf)
+            #print("uf", uf)
             print("du", du)
             print("gradu", gradu)
+            print("lt", lt, np.shape(lt))
+            print("rt", rt, np.shape(rt))
+            print("le", le, np.shape(le))
+            print("re", re, np.shape(re))
+            print("lf", lf, np.shape(lf))
+            print("rf", rf, np.shape(rf))
+            print("weight", weight, np.shape(weight))
+            print("gradf", gradf, np.shape(gradf))
             for idx in range(i_begin, i_end):
                 #*************************#
-                # Complete function
-                #gradf[:, variable,]
-                a = 5
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                rti, rfi, rei = rt[idx], rf[idx], re[idx]
+                wl, wr = weight[idx], (1 - weight[idx])
+                for dimension in range(ndims):
+                    for variable in range(nvars):
+                        ql = gradu[lti][dimension][variable][lei]
+                        qr = gradu[rti][dimension][variable][rei]
+                        gradf[dimension][variable][idx] = wl*ql + wr*qr
                 #*************************#
-
+            print("gradf", gradf, np.shape(gradf))
         return self.be.make_loop(self.nfpts, grad_at)
 
 #-------------------------------------------------------------------------------#    
