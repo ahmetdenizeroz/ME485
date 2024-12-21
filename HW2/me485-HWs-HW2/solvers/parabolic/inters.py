@@ -111,16 +111,16 @@ class ParabolicIntInters(BaseIntInters):
             du    = uf[:nele]
             gradu = uf[nele:]
             #print("uf", uf)
-            print("du", du)
-            print("gradu", gradu)
-            print("lt", lt, np.shape(lt))
-            print("rt", rt, np.shape(rt))
-            print("le", le, np.shape(le))
-            print("re", re, np.shape(re))
-            print("lf", lf, np.shape(lf))
-            print("rf", rf, np.shape(rf))
-            print("weight", weight, np.shape(weight))
-            print("gradf", gradf, np.shape(gradf))
+            #print("du", du)
+            #print("gradu int", gradu)
+            #print("lt", lt, np.shape(lt))
+            #print("rt", rt, np.shape(rt))
+            #print("le", le, np.shape(le))
+            #print("re", re, np.shape(re))
+            #print("lf", lf, np.shape(lf))
+            #print("rf", rf, np.shape(rf))
+            #print("weight", weight, np.shape(weight))
+            #print("gradf int", gradf, np.shape(gradf))
             for idx in range(i_begin, i_end):
                 #*************************#
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
@@ -132,7 +132,7 @@ class ParabolicIntInters(BaseIntInters):
                         qr = gradu[rti][dimension][variable][rei]
                         gradf[dimension][variable][idx] = wl*ql + wr*qr
                 #*************************#
-            print("gradf", gradf, np.shape(gradf))
+            #print("gradf", gradf, np.shape(gradf))
         return self.be.make_loop(self.nfpts, grad_at)
 
 #-------------------------------------------------------------------------------#    
@@ -254,12 +254,22 @@ class ParabolicBCInters(BaseBCInters):
             # Parse element views (fpts, grad)
             du = uf[:nele]
             gradu = uf[nele:]
-
+            #print("gradf bc", gradf)
+            #print("uf bc", uf)
+            #print("du bc", du)
+            #print("gradu bc", gradu)
+            #print("le bc", le)
+            #print("avec BC", avec)
+            #print("tf bc", tf)
+            #print("inv_tf bc", inv_tf)
             for idx in range(i_begin, i_end):
-               #*************************# 
-               # Complete function
-                print("_make_grad_at_face_BC")
-               #*************************# 
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                #*************************#
+                # Complete function
+                for dimension in range(ndims):
+                    for variable in range(nvars):
+                        gradf[dimension][variable][idx] = gradu[lti][dimension][variable][lei]
+                #*************************#
 
         return self.be.make_loop(self.nfpts, grad_at)
 
