@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from numba.np.arrayobj import np_shape
+from numpy.f2py.auxfuncs import throw_error
+
 from solvers.base import BaseIntInters, BaseBCInters, BaseMPIInters
 from backends.types import Kernel, NullKernel
 from solvers.parabolic.bcs import get_bc
@@ -85,13 +88,50 @@ class ParabolicIntInters(BaseIntInters):
         def comm_flux(i_begin, i_end, muf, gradf, *uf):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
-            for idx in range(i_begin, i_end):
-                #*************************# 
-                print("_make_flux_INT")
-                #*************************# 
 
-                    #uf[lti][lfi, jdx, lei] =  fn[jdx]
-                    #uf[rti][rfi, jdx, rei] = -fn[jdx]
+            #print("flux du int", du)
+            #print("flux ef int", ef, np.shape(ef))
+            #print("flux compute_mu int", compute_mu)
+            #print("flux sf int", sf)
+            #print("flux nf int", nf)
+            #print("muf int", muf)
+
+            Sf = nf * sf
+
+            for idx in range(i_begin, i_end):
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                rti, rfi, rei = rt[idx], rf[idx], re[idx]
+                fn = 0
+                Ef = np.empty((ndims))
+                ee  = np.empty((ndims))
+                Sfe = np.empty((ndims))
+                nfe = np.empty((ndims))
+                for dimension in range(ndims):
+                    ee[dimension] = ef[dimension][idx]
+                    Sfe[dimension] = Sf[dimension][idx]
+                    nfe[dimension] = nf[dimension][idx]
+                # Ef sanırım burda hesaplanacak
+                if correction == "minimum":
+                    Ef = np.dot(ee, Sfe) * ee
+                elif correction == "orthogonal":
+                    Ef = sf[idx] * ee
+                elif correction == "over_relaxed":
+                    Ef = (sf[idx] * sf[idx]) / (np.dot(ee , nfe)) * ee
+                else:
+                    print("Wrong correction type")
+                Tfe = Sfe - Ef
+                #print("tfe", Tfe)
+                rhstfdot = 0
+
+                for dimension in range(ndims):
+                    rhstfdot += gradf[dimension][0][idx] * Tfe[dimension]
+                temporary = np.sqrt(Ef.dot(Ef)) * ((du[lti][lfi][0][lei]-du[rti][lfi][0][rei])/inv_ef[idx]) + rhstfdot
+                fn = - muf[idx] * temporary
+                #print("fn", fn)
+                # Daha sonra burda flux hesaplanmalı
+                uf[lti][lfi, 0, lei] =  fn
+                uf[rti][rfi, 0, rei] = -fn
+                #print("int flux final uf", uf)
 
         return self.be.make_loop(self.nfpts, comm_flux)
 
@@ -218,6 +258,7 @@ class ParabolicBCInters(BaseBCInters):
         # avec = self._vec_snorm/np.einsum('ij,ij->j', ef, self._vec_snorm)
 
         correction = self._correction
+
         # Compiler arguments
         array = self.be.local_array()
        
@@ -229,6 +270,7 @@ class ParabolicBCInters(BaseBCInters):
         def comm_flux(i_begin, i_end, muf, gradf, *uf):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
+
             for idx in range(i_begin, i_end):
                 #*************************# 
                 # Complete function

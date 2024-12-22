@@ -151,7 +151,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 for variable in range(nvars):
                     for face in range(nface):
                         grad[:,variable,element] += op[element, face, :] * fpts[face, variable, element]
-            print ("grad", grad)
+            #print ("grad", grad)
         # Compile the numba function
         return self.be.make_loop(self.neles, _cal_grad)   
 
