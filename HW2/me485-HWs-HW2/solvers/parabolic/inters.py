@@ -88,45 +88,28 @@ class ParabolicIntInters(BaseIntInters):
         def comm_flux(i_begin, i_end, muf, gradf, *uf):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
-
-            #print("flux du int", du)
-            #print("flux ef int", ef, np.shape(ef))
-            #print("flux compute_mu int", compute_mu)
-            #print("flux sf int", sf)
-            #print("flux nf int", nf)
-            #print("muf int", muf)
-
             Sf = nf * sf
-
+            muf = compute_mu()
             for idx in range(i_begin, i_end):
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
                 rti, rfi, rei = rt[idx], rf[idx], re[idx]
+                #fn = array(nfvars)
                 fn = 0
-                Ef = np.empty((ndims))
-                ee  = np.empty((ndims))
-                Sfe = np.empty((ndims))
-                nfe = np.empty((ndims))
-                for dimension in range(ndims):
-                    ee[dimension] = ef[dimension][idx]
-                    Sfe[dimension] = Sf[dimension][idx]
-                    nfe[dimension] = nf[dimension][idx]
                 # Ef sanırım burda hesaplanacak
                 if correction == "minimum":
-                    Ef = np.dot(ee, Sfe) * ee
+                    # Ef = np.dot(ee, Sfe) * ee
+                    Ef = dot(ef[:, idx], Sf[:, idx], ndims) * ef[:, idx]
                 elif correction == "orthogonal":
-                    Ef = sf[idx] * ee
+                    Ef = sf[idx] * ef[:, idx]
                 elif correction == "over_relaxed":
-                    Ef = (sf[idx] * sf[idx]) / (np.dot(ee , nfe)) * ee
+                    # Ef = (sf[idx] * sf[idx]) / (np.dot(ee, nfe)) * ee
+                    Ef = sf[idx] * (dot(nf[:, idx], nf[:, idx], ndims) / dot(ef[:, idx], nf[:, idx])) * ef[:, idx]
                 else:
                     print("Wrong correction type")
-                Tfe = Sfe - Ef
+                Tfe = Sf[:, idx] - Ef
                 #print("tfe", Tfe)
-                rhstfdot = 0
-
-                for dimension in range(ndims):
-                    rhstfdot += gradf[dimension][0][idx] * Tfe[dimension]
-                temporary = np.sqrt(Ef.dot(Ef)) * ((du[lti][lfi][0][lei]-du[rti][lfi][0][rei])/inv_ef[idx]) + rhstfdot
-                fn = - muf[idx] * temporary
+                temporary = np.linalg.norm(Ef) * ((du[lti][lfi][0][lei]-du[rti][lfi][0][rei])/inv_ef[idx]) + dot(gradf[:, 0, lei], Tfe, ndims)
+                fn = - muf * temporary
                 #print("fn", fn)
                 # Daha sonra burda flux hesaplanmalı
                 uf[lti][lfi, 0, lei] =  fn
@@ -270,12 +253,29 @@ class ParabolicBCInters(BaseBCInters):
         def comm_flux(i_begin, i_end, muf, gradf, *uf):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
-
+            Sf = nf * sf
+            muf = compute_mu()
             for idx in range(i_begin, i_end):
-                #*************************# 
-                # Complete function
-                print("_make_flux_BC")
-                #*************************# 
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                #fn = np.empty(nfvars)
+                fn = 0
+                # Ef sanırım burda hesaplanacak
+                if correction == "minimum":
+                    #Ef = np.dot(ee, Sfe) * ee
+                    Ef = dot(ef[:,idx], Sf[:,idx], ndims) * ef[:,idx]
+                elif correction == "orthogonal":
+                    Ef = sf[idx] * ef[:,idx]
+                elif correction == "over_relaxed":
+                    #Ef = (sf[idx] * sf[idx]) / (np.dot(ee, nfe)) * ee
+                    Ef = sf[idx] * (dot(nf[:,idx], nf[:,idx], ndims)/dot(ef[:,idx], nf[:,idx])) * ef[:,idx]
+                else:
+                    print("Wrong correction type")
+                Tfe = Sf[:, idx] - Ef
+                temporary = np.linalg.norm(Ef) * (du[lti][lfi][0][lei] / inv_ef[idx]) + dot(gradf[:,0,lfi],Tfe, ndims)
+                fn = - muf * temporary
+                # Daha sonra burda flux hesaplanmalı
+                uf[lti][lfi, 0, lei] = fn
+                # print("int flux final uf", uf)
                 
         return self.be.make_loop(self.nfpts, comm_flux)
 
