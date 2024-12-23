@@ -128,7 +128,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
             # Complete function
             # upts: array holding cell center values
             # fpts: array holding face values
-            for element in range(neles):
+            for element in range(i_begin, i_end):
                 for face in range(nface):
                     for variable in range(nvars):
                         fpts[face, variable, element] = upts[variable, element]
@@ -141,6 +141,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         # Gradient operator 
         op = self._prelsq
+        #print("op", op)
         def _cal_grad(i_begin, i_end, fpts, grad):
             #*************************#
             # Complete function
@@ -150,7 +151,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
             for element in range(i_begin, i_end):
                 for variable in range(nvars):
                     for face in range(nface):
-                        grad[:,variable,element] += op[element, face, :] * fpts[face, variable, element]
+                        grad[:,variable,element] += op[:, face, element] * fpts[face, variable, element]
             #print ("grad", grad)
         # Compile the numba function
         return self.be.make_loop(self.neles, _cal_grad)   
