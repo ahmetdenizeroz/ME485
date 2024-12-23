@@ -73,20 +73,21 @@ s5  = gmsh.model.geo.addPlaneSurface([cl6])
 # # location of the nodes on the curve. For example, the following command forces
 # # 10 uniformly placed nodes on curve 2 (including the nodes on the two end
 # # points):
-gmsh.model.geo.mesh.setTransfiniteCurve(l5,  20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l6,  20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l7,  20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l8,  20)
+a = 15
+gmsh.model.geo.mesh.setTransfiniteCurve(l5,  a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l6,  a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l7,  a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l8,  a)
 
-gmsh.model.geo.mesh.setTransfiniteCurve(l1,  20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l2,  20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l3,  20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l4,  20)
+gmsh.model.geo.mesh.setTransfiniteCurve(l1,  a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l2,  a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l3,  a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l4,  a)
 
-gmsh.model.geo.mesh.setTransfiniteCurve(l13, 20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l14, 20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l15, 20)
-gmsh.model.geo.mesh.setTransfiniteCurve(l16, 20)
+gmsh.model.geo.mesh.setTransfiniteCurve(l13, a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l14, a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l15, a)
+gmsh.model.geo.mesh.setTransfiniteCurve(l16, a)
 
 gmsh.model.geo.mesh.setTransfiniteSurface(s2)
 gmsh.model.geo.mesh.setTransfiniteSurface(s3)

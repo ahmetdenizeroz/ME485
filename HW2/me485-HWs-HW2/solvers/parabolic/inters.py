@@ -320,8 +320,8 @@ class ParabolicBCInters(BaseBCInters):
                 # Complete function
                 for dimension in range(ndims):
                     for variable in range(nvars):
-                        #gradf[dimension][variable][idx] = gradu[lti][dimension][variable][lei]
-                        gradf[dimension][variable][idx] = avec[dimension][idx] * gradu[lti][dimension][variable][lei]
+                        gradf[dimension][variable][idx] = gradu[lti][dimension][variable][lei]
+                        #gradf[dimension][variable][idx] = avec[dimension][idx] * gradu[lti][dimension][variable][lei]
                 #*************************#
 
         return self.be.make_loop(self.nfpts, grad_at)
