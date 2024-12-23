@@ -103,16 +103,11 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
 
 #-------------------------------------------------------------------------------#
     def _make_compute_norm(self):
-        #*************************# 
-        # get required data here
-
-        #*************************# 
-        def run(upts):
-        #*************************# 
-        # compute L2 norm in this function
-        # upts is the solution field
-            norm = 5
         #*************************#
+
+        # *************************#
+        def run(upts):
+            norm = 5
             return norm
 
         return self.be.compile(run, outer=True)
@@ -150,6 +145,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
             #*************************#
             for element in range(i_begin, i_end):
                 for variable in range(nvars):
+                    grad[:, variable, element] = 0.0
                     for face in range(nface):
                         grad[:,variable,element] += op[:, face, element] * fpts[face, variable, element]
             #print ("grad", grad)
