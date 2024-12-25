@@ -88,7 +88,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         self.div_upts = Kernel(self._make_div_upts(), upts_out, fpts)
 
         # Kernel to compute residuals
-        #self.compute_norm = Kernel(self._make_compute_norm(), self.upts_out)
+        self.compute_norm = Kernel(self._make_compute_norm(), self.upts_out)
 
         if self.order > 1:
             # Kernel to compute gradient
@@ -103,51 +103,47 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
 
 #-------------------------------------------------------------------------------#
     #def _make_compute_norm(self):
-    def compute_norm(self):
+    def _make_compute_norm(self):
         # Get required data here
         nvars, ndims, neles = self.nvars, self.ndims, self.neles
         vol = self._vol  # Element volume
-        L, W = 1, 1  # Length and Width of the domain
-        upts = self.upts
-        uptsout = self.upts_out
         xc = self.xc
         volume = self._vol
-        eror = np.zeros((neles))
-        exact_soln = np.zeros((neles))
-        '''
-        #def run(upts):
-        for element in range(neles):
-            x = xc[element][0]
-            y = xc[element][1]
-            #print("x", x)
-            r = (x**2 + y**2)**0.5
-            #print("r", r)
-            T = 1 - (1/np.log(1/0.1)) * np.log(r/0.1)
-            #print("T", T)
-            tenp = (upts[1][0][element] - T)**2 * vol[element]
-            #print(tenp)
-            eror[element] = tenp
-        sum = np.sum(eror)
-        norm = sum**0.5
-        '''
-        '''
-        theta_value = 0
-        for element in range(neles):
-            for n in range(1, 2):
-                alternating_term = (-1) ** (n + 1) + 1
-                sin_term = np.sin(n * np.pi * xc[element][0] / L)
-                sinh_y_term = np.sinh(n * np.pi * xc[element][1] / L)
-                sinh_W_term = np.sinh(n * np.pi * W / L)
-                theta_value += (alternating_term / n) * sin_term * sinh_y_term / sinh_W_term
 
-            exact_soln[element] = (2 / np.pi) * theta_value
+        def run(upts):
+            eror = np.zeros((neles))
+            exact_soln = np.zeros((neles))
+            L, W = 3, 3  # Length and Width of the domain
+            '''
+            for element in range(neles):
+                x = xc[element][0]
+                y = xc[element][1]
+                #print("x", x)
+                r = (x**2 + y**2)**0.5
+                #print("r", r)
+                T = 1 - (1/np.log(1/0.1)) * np.log(r/(0.1*2**0.5))
+                #print("T", T)
+                tenp = (upts[1][0][element] - T)**2 * vol[element]
+                #print(tenp)
+                eror[element] = tenp
+            sum = np.sum(eror)
+            norm = sum**0.5
+            '''
 
-        norm= np.sqrt(np.sum(np.square(upts[1][0] - exact_soln) * volume))
-        '''
-        norm = 5
-        return norm
+            for element in range(neles):
+                theta_value = 0
+                for n in range(1, 21):
+                    alternating_term = (-1) ** (n + 1) + 1
+                    sin_term = np.sin(n * np.pi * xc[element][0] / L)
+                    sinh_y_term = np.sinh(n * np.pi * xc[element][1] / L)
+                    sinh_W_term = np.sinh(n * np.pi * W / L)
+                    theta_value += (alternating_term / n) * sin_term * sinh_y_term / sinh_W_term
+                exact_soln[element] = (2 / np.pi) * theta_value
 
-        #return self.be.compile(run, outer=True)
+            norm= np.sqrt(np.sum(np.square(upts[0] - exact_soln) * volume))
+            return norm
+
+        return self.be.compile(run, outer=True)
 
 #-------------------------------------------------------------------------------#
     def _make_compute_fpts(self):

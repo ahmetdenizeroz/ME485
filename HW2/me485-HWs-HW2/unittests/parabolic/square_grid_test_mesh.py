@@ -6,7 +6,7 @@ gmsh.model.add("mixed")
 
 # Parameters
 region_size = 3.0  # Size of the entire square region
-num_divisions = 3  # Number of divisions along each edge
+num_divisions = 100  # Number of divisions along each edge
 
 # Create points for the large square region
 p1 = gmsh.model.geo.addPoint(0, 0, 0)
@@ -36,7 +36,8 @@ gmsh.model.geo.mesh.setRecombine(2, surface)
 # Synchronize the model
 gmsh.model.geo.synchronize()
 
-gmsh.model.addPhysicalGroup(1, [l1, l2, l3, l4], 11, name = "outer")
+gmsh.model.addPhysicalGroup(1, [l1, l2, l4], 11, name = "inner")
+gmsh.model.addPhysicalGroup(1, [l3], 12, name = "outer")
 gmsh.model.addPhysicalGroup(2, [surface], 13, name = "fluid")
 
 # Set the meshing algorithm to structured

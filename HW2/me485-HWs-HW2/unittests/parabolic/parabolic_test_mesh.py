@@ -7,7 +7,7 @@ gmsh.initialize(sys.argv)
 
 # Next add a new model named "cavity" 
 gmsh.model.add("mixed")
-lc = 0.125
+lc = 0.75
 #Points
 p1  = gmsh.model.geo.addPoint(0.0, 0.0, 0.0, lc);
 
@@ -73,7 +73,7 @@ s5  = gmsh.model.geo.addPlaneSurface([cl6])
 # # location of the nodes on the curve. For example, the following command forces
 # # 10 uniformly placed nodes on curve 2 (including the nodes on the two end
 # # points):
-a = 15
+a = 8
 gmsh.model.geo.mesh.setTransfiniteCurve(l5,  a)
 gmsh.model.geo.mesh.setTransfiniteCurve(l6,  a)
 gmsh.model.geo.mesh.setTransfiniteCurve(l7,  a)
