@@ -64,7 +64,6 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         # Solution vector bank and assign upts index
         self.upts_in = upts_in = ArrayBank(upts, 0)
         self.upts_out = upts_out = ArrayBank(upts, 1)
-
         # Construct arrays for flux points, dt and derivatives of source term
         self.fpts = fpts = np.empty((self.nface, self.nvars, self.neles))
         self.dt = np.empty(self.neles)
@@ -109,24 +108,27 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         vol = self._vol  # Element volume
         xc = self.xc
         volume = self._vol
+        #print("_make_compute_norm")
 
         def run(upts):
             eror = np.zeros((neles))
             exact_soln = np.zeros((neles))
             L, W = 3, 3  # Length and Width of the domain
+            #print("run")
+            '''
             for element in range(neles):
                 x = xc[element][0]
                 y = xc[element][1]
                 #print("x", x)
                 r = (x**2 + y**2)**0.5
                 #print("r", r)
-                T = 1 - (1/np.log(1/0.1)) * np.log(r/(0.1*2**0.5))
+                T = 1 - np.log((1*(2**0.5))/r) / (1/np.log(1/0.1))
                 #print("T", T)
                 tenp = (upts[0][element] - T)**2 * vol[element]
-                #print(tenp)
                 eror[element] = tenp
             sum = np.sum(eror)
             norm = sum**0.5
+            norm= np.sqrt(np.sum(np.square(upts[0] - exact_soln) * volume))
             '''
             for element in range(neles):
                 theta_value = 0
@@ -139,7 +141,6 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 exact_soln[element] = (2 / np.pi) * theta_value
 
             norm= np.sqrt(np.sum(np.square(upts[0] - exact_soln) * volume))
-            '''
             return norm
 
         return self.be.compile(run, outer=True)

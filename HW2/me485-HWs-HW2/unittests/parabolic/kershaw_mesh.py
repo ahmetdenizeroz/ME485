@@ -4,7 +4,7 @@ import math
 
 # Before using any functions in the Python API, Gmsh must be initialized:
 gmsh.initialize(sys.argv)
-alpha = 0.40
+alpha = 0.1
 
 
 
@@ -156,8 +156,8 @@ gmsh.model.geo.mesh.setRecombine(2, s8)
 
 gmsh.model.geo.synchronize()
 
-gmsh.model.addPhysicalGroup(1, [l1, l2, l3, l8, l13, l18, l19, l20], 11 , name="outer")
-gmsh.model.addPhysicalGroup(1, [l6, l11, l16, l21], 12 , name="inner")
+gmsh.model.addPhysicalGroup(1, [l19, l20], 11 , name="outer")
+gmsh.model.addPhysicalGroup(1, [l1, l2, l3, l8, l13, l18, l6, l11, l16, l21], 12 , name="inner")
 gmsh.model.addPhysicalGroup(2, [s1, s2, s3, s4, s5,s6,s7,s8],13 , name="fluid")
 
 # Save it to disk

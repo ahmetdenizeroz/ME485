@@ -88,39 +88,26 @@ class ParabolicIntInters(BaseIntInters):
         def comm_flux(i_begin, i_end, muf, gradf, *uf):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
-            #Sf = nf * sf
             for idx in range(i_begin, i_end):
                 muf = compute_mu()
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
                 rti, rfi, rei = rt[idx], rf[idx], re[idx]
-                #fn = array(nfvars)
                 fn = 0
                 Sf = nf[:, idx] * sf[idx]
                 # Ef sanırım burda hesaplanacak
                 if correction == "minimum":
-                    # Ef = np.dot(ee, Sfe) * ee
-                    #Ef = dot(ef[:, idx], Sf[:, idx], ndims) #* ef[:, idx]
                     Ef = dot(ef[:, idx], Sf, ndims)  # * ef[:, idx]
                 elif correction == "orthogonal":
                     Ef = sf[idx] #* ef[:, idx]
                 elif correction == "over_relaxed":
-                    # Ef = (sf[idx] * sf[idx]) / (np.dot(ee, nfe)) * ee
                     Ef = sf[idx] * (dot(nf[:, idx], nf[:, idx], ndims) / dot(ef[:, idx], nf[:, idx], ndims)) #* ef[:, idx]
                 else:
                     print("Wrong correction type")
-                #Tfe = Sf[:, idx] - Ef * ef[:,idx]
                 Tfe = Sf - Ef * ef[:, idx]
-                #print("tfe", Tfe)
-                #temporary = np.linalg.norm(Ef) * ((du[lti][lfi][0][lei]-du[rti][lfi][0][rei])*inv_ef[idx]) + dot(gradf[:, 0, lei], Tfe, ndims)
-                #temporary = np.linalg.norm(Ef) * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, lei], Tfe, ndims)
-                #temporary = Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims)
-                fn = -1 * muf * Ef * (du[lti][lfi][0][lei] * inv_ef[idx])    + dot(gradf[:, 0, idx], Tfe, ndims)
-                #print("\n", gradf[:, 0, idx])
-                #print("fn", fn)
+                fn = -1 * muf * (Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims))
                 # Daha sonra burda flux hesaplanmalı
                 uf[lti][lfi, 0, lei] =  fn
                 uf[rti][rfi, 0, rei] = -fn
-                #print("int flux final uf", uf)
 
         return self.be.make_loop(self.nfpts, comm_flux)
 
@@ -139,17 +126,6 @@ class ParabolicIntInters(BaseIntInters):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
             gradu = uf[nele:]
-            #print("uf", uf)
-            #print("du", du)
-            #print("gradu int", gradu)
-            #print("lt", lt, np.shape(lt))
-            #print("rt", rt, np.shape(rt))
-            #print("le", le, np.shape(le))
-            #print("re", re, np.shape(re))
-            #print("lf", lf, np.shape(lf))
-            #print("rf", rf, np.shape(rf))
-            #print("weight", weight, np.shape(weight))
-            #print("gradf int", gradf, np.shape(gradf))
             for idx in range(i_begin, i_end):
                 #*************************#
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
@@ -159,6 +135,7 @@ class ParabolicIntInters(BaseIntInters):
                     for variable in range(nvars):
                         ql = gradu[lti][dimension][variable][lei]
                         qr = gradu[rti][dimension][variable][rei]
+                        gradf[dimension][variable][idx] = 0
                         gradf[dimension][variable][idx] = wl*ql + wr*qr
                 #*************************#
             #print("gradf", gradf, np.shape(gradf))
@@ -259,7 +236,6 @@ class ParabolicBCInters(BaseBCInters):
         def comm_flux(i_begin, i_end, muf, gradf, *uf):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
-            #Sf = nf * sf
             for idx in range(i_begin, i_end):
                 muf = compute_mu()
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
@@ -268,24 +244,17 @@ class ParabolicBCInters(BaseBCInters):
                 Sf = nf[:, idx] * sf[idx]
                 # Ef sanırım burda hesaplanacak
                 if correction == "minimum":
-                    #Ef = np.dot(ee, Sfe) * ee
-                    #Ef = dot(ef[:,idx], Sf[:,idx], ndims) #* ef[:,idx]
-                    Ef = dot(ef[:, idx], Sf, ndims)  # * ef[:,idx]
+                    Ef = dot(ef[:, idx], Sf, ndims)
                 elif correction == "orthogonal":
-                    Ef = sf[idx] #* ef[:,idx]
+                    Ef = sf[idx]
                 elif correction == "over_relaxed":
-                    #Ef = (sf[idx] * sf[idx]) / (np.dot(ee, nfe)) * ee
-                    Ef = sf[idx] * (dot(nf[:,idx], nf[:,idx], ndims)/dot(ef[:,idx], nf[:,idx], ndims)) #* ef[:,idx]
+                    Ef = sf[idx] * (dot(nf[:,idx], nf[:,idx], ndims)/dot(ef[:,idx], nf[:,idx], ndims))
                 else:
                     print("Wrong correction type")
-                #Tfe = Sf[:, idx] - Ef * ef[:,idx]
                 Tfe = Sf - Ef * ef[:, idx]
-                #temporary = np.linalg.norm(Ef) * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:,0,lfi],Tfe, ndims)
-                temporary = Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims)
-                fn = -1 * muf * temporary
+                fn = -1 * muf * (Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims))
                 # Daha sonra burda flux hesaplanmalı
                 uf[lti][lfi, 0, lei] = fn
-                # print("int flux final uf", uf)
                 
         return self.be.make_loop(self.nfpts, comm_flux)
 
@@ -306,20 +275,13 @@ class ParabolicBCInters(BaseBCInters):
             # Parse element views (fpts, grad)
             du = uf[:nele]
             gradu = uf[nele:]
-            #print("gradf bc", gradf)
-            #print("uf bc", uf)
-            #print("du bc", du)
-            #print("gradu bc", gradu)
-            #print("le bc", le)
-            #print("avec BC", avec)
-            #print("tf bc", tf)
-            #print("inv_tf bc", inv_tf)
             for idx in range(i_begin, i_end):
                 lti, lfi, lei = lt[idx], lf[idx], le[idx]
                 #*************************#
                 # Complete function
                 for dimension in range(ndims):
                     for variable in range(nvars):
+                        gradf[dimension][variable][idx] = 0
                         gradf[dimension][variable][idx] = gradu[lti][dimension][variable][lei]
                         #gradf[dimension][variable][idx] = avec[dimension][idx] * gradu[lti][dimension][variable][lei]
                 #*************************#
