@@ -6,7 +6,7 @@ gmsh.model.add("mixed")
 
 # Parameters
 region_size = 3.0  # Size of the entire square region
-num_divisions = 100  # Number of divisions along each edge
+num_divisions = 50 # Number of divisions along each edge
 
 # Create points for the large square region
 p1 = gmsh.model.geo.addPoint(0, 0, 0)

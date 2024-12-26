@@ -114,7 +114,7 @@ class ParabolicIntInters(BaseIntInters):
                 #temporary = np.linalg.norm(Ef) * ((du[lti][lfi][0][lei]-du[rti][lfi][0][rei])*inv_ef[idx]) + dot(gradf[:, 0, lei], Tfe, ndims)
                 #temporary = np.linalg.norm(Ef) * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, lei], Tfe, ndims)
                 #temporary = Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims)
-                fn = -1 * muf * Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims)
+                fn = -1 * muf * Ef * (du[lti][lfi][0][lei] * inv_ef[idx])    + dot(gradf[:, 0, idx], Tfe, ndims)
                 #print("\n", gradf[:, 0, idx])
                 #print("fn", fn)
                 # Daha sonra burda flux hesaplanmalı

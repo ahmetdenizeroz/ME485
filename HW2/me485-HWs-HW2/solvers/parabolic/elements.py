@@ -114,7 +114,6 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
             eror = np.zeros((neles))
             exact_soln = np.zeros((neles))
             L, W = 3, 3  # Length and Width of the domain
-            '''
             for element in range(neles):
                 x = xc[element][0]
                 y = xc[element][1]
@@ -123,13 +122,12 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 #print("r", r)
                 T = 1 - (1/np.log(1/0.1)) * np.log(r/(0.1*2**0.5))
                 #print("T", T)
-                tenp = (upts[1][0][element] - T)**2 * vol[element]
+                tenp = (upts[0][element] - T)**2 * vol[element]
                 #print(tenp)
                 eror[element] = tenp
             sum = np.sum(eror)
             norm = sum**0.5
             '''
-
             for element in range(neles):
                 theta_value = 0
                 for n in range(1, 21):
@@ -141,6 +139,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 exact_soln[element] = (2 / np.pi) * theta_value
 
             norm= np.sqrt(np.sum(np.square(upts[0] - exact_soln) * volume))
+            '''
             return norm
 
         return self.be.compile(run, outer=True)
@@ -176,11 +175,20 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
             # grad: array holding cell center gradient values
             # fpts: array holding face values
             #*************************#
+            '''
             for element in range(i_begin, i_end):
                 for variable in range(nvars):
                     grad[:, variable, element] = 0.0
                     for face in range(nface):
                         grad[:,variable,element] += op[:, face, element] * fpts[face, variable, element]
+            '''
+            for element in range(i_begin, i_end):
+                for variable in range(nvars):
+                    for dimension in range(ndims):
+                        grad0 = 0
+                        for face in range(nface):
+                            grad0 += op[dimension, face, element] * fpts[face, variable, element]
+                        grad[dimension, variable, element] = grad0
             #print ("grad", grad)
         # Compile the numba function
         return self.be.make_loop(self.neles, _cal_grad)   
