@@ -114,9 +114,10 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
             eror = np.zeros((neles))
             exact_soln = np.zeros((neles))
             #print("upts", np.shape(upts))
-            '''
+
             # For Rectengular Mesh
             for element in range(neles):
+                '''
                 x = xc[element][0]
                 y = xc[element][1]
                 L, W = 1, 1
@@ -133,7 +134,9 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 flux_y = -1 * term_1 * term_y
 
                 flux_div = flux_x + flux_y
-                temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
+                '''
+                #temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
+                temp = ((upts[0][element] - 0) ** 2) * vol[element]
                 eror[element] = temp
             sum = np.sum(eror)
             norm = sum ** 0.5
@@ -157,13 +160,13 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 flux_div_y = (T2 - T1) * k * (-1 * k * (y**2 - x**2 )) / (np.log(r[1] / r[0]) * ((x ** 2 + y ** 2) ** 2))
 
                 flux_div = flux_div_x + flux_div_y
-                print(flux_div)
                 temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
                 eror[element] = temp
 
             sum = np.sum(eror)
             norm = sum**0.5
             return norm
+            '''
         return self.be.compile(run, outer=True)
 
 #-------------------------------------------------------------------------------#
