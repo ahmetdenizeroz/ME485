@@ -64,7 +64,7 @@ def _common(msh, soln, cfg, backend, comm):
     if comm.rank == 0:
         if integrator.mode == 'unsteady':
             pb = tqdm( total=integrator.tlist[-1], initial=integrator.tcurr,
-                       unit_scale=True)
+                       unit_scale=True, colour = "blue")
             def callb(intg): return pb.update(intg.dt)
             integrator.completed_handler.append(callb)
         elif integrator.mode =='steady':

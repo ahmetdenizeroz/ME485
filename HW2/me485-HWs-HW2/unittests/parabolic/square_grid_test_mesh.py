@@ -6,7 +6,7 @@ gmsh.model.add("mixed")
 
 # Parameters
 region_size = 3.0  # Size of the entire square region
-num_divisions = 3 # Number of divisions along each edge
+num_divisions = 5 # Number of divisions along each edge
 
 # Create points for the large square region
 p1 = gmsh.model.geo.addPoint(0, 0, 0)
@@ -41,7 +41,7 @@ gmsh.model.addPhysicalGroup(1, [l3], 12, name = "outer")
 gmsh.model.addPhysicalGroup(2, [surface], 13, name = "fluid")
 
 # Set the meshing algorithm to structured
-#gmsh.option.setNumber("Mesh.Algorithm", 5)  # Use the transfinite algorithm
+gmsh.option.setNumber("Mesh.Algorithm", 5)  # Use the transfinite algorithm
 
 # Generate 2D mesh
 gmsh.model.mesh.generate(2)

@@ -108,39 +108,60 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         vol = self._vol  # Element volume
         xc = self.xc
         volume = self._vol
-        #print("_make_compute_norm")
+        print("_make_compute_norm")
 
         def run(upts):
             eror = np.zeros((neles))
             exact_soln = np.zeros((neles))
-            L, W = 3, 3  # Length and Width of the domain
-            #print("run")
+            #print("upts", np.shape(upts))
+
+            for element in range(neles):
+                x = xc[element][0]
+                y = xc[element][1]
+                L, W = 3, 3
+                T2, T1 = 1, 0
+                flux_x = 0
+                term_x = 0
+                term_y = 0
+                term_1 = (-2 * np.pi / (L ** 2))
+                for n in range(1, 21):
+                    term_x += ((-1) ** (n + 1) + 1) * n * np.sin(n * np.pi * x / L) * np.sinh(n * np.pi * y / L ) / np.sinh(n * np.pi * W / L)
+                    term_y += ((-1) ** (n + 1) + 1) * n * np.sin(n * np.pi * x / L) * np.sinh(n * np.pi * y / L ) / np.sinh(n * np.pi * W / L)
+
+                flux_x = term_1 * term_x
+                flux_y = term_1 * term_y
+
+                flux_div = flux_x + flux_y
+                temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
+                eror[element] = temp
+            sum = np.sum(eror)
+            norm = sum ** 0.5
+
+            return norm
             '''
             for element in range(neles):
                 x = xc[element][0]
                 y = xc[element][1]
-                #print("x", x)
-                r = (x**2 + y**2)**0.5
-                #print("r", r)
-                T = 1 - np.log((1*(2**0.5))/r) / (1/np.log(1/0.1))
-                #print("T", T)
-                tenp = (upts[0][element] - T)**2 * vol[element]
-                eror[element] = tenp
+                r_i = (x ** 2 + y ** 2) ** 0.5
+                T2, T1 = 1, 0
+                q = 0
+                k = 1
+                r = [0.1 * (2 ** 0.5), 1 * (2 ** 0.5)]
+
+                flux= (k * (T2 - T1) / (r_i * np.log(r[1] / r[0])))
+                angle = np.arctan2(y ,x)
+
+                flux_div_x = (-1 * k * (x-y) * (x+y)) / (np.log(r[1]/r[0]) * ((x**2 +  y**2)**2))
+                flux_div_y = (-1 * k * (y**2 - x**2 )) / (np.log(r[1] / r[0]) * ((x ** 2 + y ** 2) ** 2))
+
+                flux_div = flux_div_x + flux_div_y
+
+                temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
+                eror[element] = temp
+
             sum = np.sum(eror)
             norm = sum**0.5
-            norm= np.sqrt(np.sum(np.square(upts[0] - exact_soln) * volume))
             '''
-            for element in range(neles):
-                theta_value = 0
-                for n in range(1, 21):
-                    alternating_term = (-1) ** (n + 1) + 1
-                    sin_term = np.sin(n * np.pi * xc[element][0] / L)
-                    sinh_y_term = np.sinh(n * np.pi * xc[element][1] / L)
-                    sinh_W_term = np.sinh(n * np.pi * W / L)
-                    theta_value += (alternating_term / n) * sin_term * sinh_y_term / sinh_W_term
-                exact_soln[element] = (2 / np.pi) * theta_value
-
-            norm= np.sqrt(np.sum(np.square(upts[0] - exact_soln) * volume))
             return norm
 
         return self.be.compile(run, outer=True)

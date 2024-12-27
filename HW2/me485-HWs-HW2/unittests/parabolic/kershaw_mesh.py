@@ -4,7 +4,7 @@ import math
 
 # Before using any functions in the Python API, Gmsh must be initialized:
 gmsh.initialize(sys.argv)
-alpha = 0.1
+alpha = 0.31
 
 
 
