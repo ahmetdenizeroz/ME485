@@ -64,7 +64,6 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         # Solution vector bank and assign upts index
         self.upts_in = upts_in = ArrayBank(upts, 0)
         self.upts_out = upts_out = ArrayBank(upts, 1)
-
         # Construct arrays for flux points, dt and derivatives of source term
         self.fpts = fpts = np.empty((self.nface, self.nvars, self.neles))
         self.dt = np.empty(self.neles)
@@ -102,45 +101,90 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         self.timestep = Kernel(self._make_timestep(), self.upts_in, self.dt)
 
 #-------------------------------------------------------------------------------#
+    #def _make_compute_norm(self):
     def _make_compute_norm(self):
-        #*************************# 
-        # get required data here
+        # Get required data here
+        nvars, ndims, neles = self.nvars, self.ndims, self.neles
+        vol = self._vol  # Element volume
+        xc = self.xc
+        volume = self._vol
+        print("_make_compute_norm")
 
-
-
-
-        #*************************# 
         def run(upts):
-        #*************************# 
-        # compute L2 norm in this function
-        # upts is the solution field
+            eror = np.zeros((neles))
+            exact_soln = np.zeros((neles))
+            #print("upts", np.shape(upts))
 
+            # For Rectengular Mesh
+            for element in range(neles):
+                x = xc[element][0]
+                y = xc[element][1]
+                L, W = 1, 1
+                T2, T1 = 1, 0
+                flux_x = 0
+                term_x = 0
+                term_y = 0
+                term_1 = (-2 * np.pi / (L ** 2))
+                for n in range(1, 1): #Exact solution already 0
+                    term_x += ((-1) ** (n + 1) + 1) * n * np.sin(n * np.pi * x / L) * np.sinh(n * np.pi * y / L ) / np.sinh(n * np.pi * W / L)
+                    term_y += ((-1) ** (n + 1) + 1) * n * np.sin(n * np.pi * x / L) * np.sinh(n * np.pi * y / L ) / np.sinh(n * np.pi * W / L)
 
+                flux_x = term_1 * term_x
+                flux_y = -1 * term_1 * term_y
 
+                flux_div = flux_x + flux_y
 
-        #*************************# 
+                #temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
+                temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
+                eror[element] = temp
+            sum = np.sum(eror)
+            norm = sum ** 0.5
 
             return norm
+            '''
+            # For Disk Mesh
+            for element in range(neles):
+                x = xc[element][0]
+                y = xc[element][1]
+                r_i = (x ** 2 + y ** 2) ** 0.5
+                T2, T1 = 1, 0
+                q = 0
+                k = 1
+                r = [0.1 * (2 ** 0.5), 1 * (2 ** 0.5)]
 
+                flux= (k * (T2 - T1) / (r_i * np.log(r[1] / r[0])))
+                angle = np.arctan2(y ,x)
+
+                flux_div_x = (T2 - T1) * k * (-1 * k * (x-y) * (x+y)) / (np.log(r[1]/r[0]) * ((x**2 +  y**2)**2))
+                flux_div_y = (T2 - T1) * k * (-1 * k * (y**2 - x**2 )) / (np.log(r[1] / r[0]) * ((x ** 2 + y ** 2) ** 2))
+
+                flux_div = flux_div_x + flux_div_y
+                temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
+                eror[element] = temp
+
+            sum = np.sum(eror)
+            norm = sum**0.5
+            return norm
+            '''
         return self.be.compile(run, outer=True)
 
 #-------------------------------------------------------------------------------#
     def _make_compute_fpts(self):
         #*************************# 
         # get required data here
+        nface, neles, nvars = self.nface, self.neles, self.nvars
         #*************************# 
         def _compute_fpts(i_begin, i_end, upts, fpts):
+            #*************************#
+            # Complete function
+            # upts: array holding cell center values
+            # fpts: array holding face values
+            for element in range(i_begin, i_end):
+                for face in range(nface):
+                    for variable in range(nvars):
+                        fpts[face, variable, element] = upts[variable, element]
         #*************************# 
-        # Complete function
-        # upts: array holding cell center values
-        # fpts: array holding face values
 
-
-
-
-        #*************************# 
-            
-        
         return self.be.make_loop(self.neles, _compute_fpts)
 
 #-------------------------------------------------------------------------------#
@@ -148,15 +192,28 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
         nface, ndims, nvars = self.nface, self.ndims, self.nvars
         # Gradient operator 
         op = self._prelsq
+        #print("op", op)
         def _cal_grad(i_begin, i_end, fpts, grad):
-        #*************************# 
-        # Complete function
-        # grad: array holding cell center gradient values
-        # fpts: array holding face values
-
-        #*************************# 
-
-
+            #*************************#
+            # Complete function
+            # grad: array holding cell center gradient values
+            # fpts: array holding face values
+            #*************************#
+            '''
+            for element in range(i_begin, i_end):
+                for variable in range(nvars):
+                    grad[:, variable, element] = 0.0
+                    for face in range(nface):
+                        grad[:,variable,element] += op[:, face, element] * fpts[face, variable, element]
+            '''
+            for element in range(i_begin, i_end):
+                for variable in range(nvars):
+                    for dimension in range(ndims):
+                        grad0 = 0
+                        for face in range(nface):
+                            grad0 += op[dimension, face, element] * fpts[face, variable, element]
+                        grad[dimension, variable, element] = grad0
+            #print ("grad", grad)
         # Compile the numba function
         return self.be.make_loop(self.neles, _cal_grad)   
 

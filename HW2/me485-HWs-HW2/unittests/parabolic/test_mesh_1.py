@@ -45,7 +45,8 @@ gmsh.model.geo.mesh.setRecombine(2, s1)
 
 gmsh.model.geo.synchronize()
 
-gmsh.model.addPhysicalGroup(1, [l1, l2, l3, l4, l5, l6], 11 , name="outer")
+gmsh.model.addPhysicalGroup(1, [l1, l2, l3, l6], 11 , name="inner")
+gmsh.model.addPhysicalGroup(1, [l4, l5], 12 , name="outer")
 gmsh.model.addPhysicalGroup(2, [s1, s2],13 , name="fluid")
 
 # # Save it to disk

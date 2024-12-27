@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from numba.np.arrayobj import np_shape
+from numpy.f2py.auxfuncs import throw_error
+
 from solvers.base import BaseIntInters, BaseBCInters, BaseMPIInters
 from backends.types import Kernel, NullKernel
 from solvers.parabolic.bcs import get_bc
@@ -86,17 +89,25 @@ class ParabolicIntInters(BaseIntInters):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
             for idx in range(i_begin, i_end):
-                #*************************# 
-                # Complete function
-            
-
-                #*************************# 
-                
-
-
-
-                    uf[lti][lfi, jdx, lei] =  fn[jdx]
-                    uf[rti][rfi, jdx, rei] = -fn[jdx]
+                muf = compute_mu()
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                rti, rfi, rei = rt[idx], rf[idx], re[idx]
+                fn = 0
+                Sf = nf[:, idx] * sf[idx]
+                # Ef sanırım burda hesaplanacak
+                if correction == "minimum":
+                    Ef = dot(ef[:, idx], Sf, ndims)  # * ef[:, idx]
+                elif correction == "orthogonal":
+                    Ef = sf[idx] #* ef[:, idx]
+                elif correction == "over_relaxed":
+                    Ef = sf[idx] * (dot(nf[:, idx], nf[:, idx], ndims) / dot(ef[:, idx], nf[:, idx], ndims)) #* ef[:, idx]
+                else:
+                    print("Wrong correction type")
+                Tfe = Sf - Ef * ef[:, idx]
+                fn = -1 * muf * (Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims))
+                # Daha sonra burda flux hesaplanmalı
+                uf[lti][lfi, 0, lei] =  fn
+                uf[rti][rfi, 0, rei] = -fn
 
         return self.be.make_loop(self.nfpts, comm_flux)
 
@@ -115,14 +126,19 @@ class ParabolicIntInters(BaseIntInters):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
             gradu = uf[nele:]
-
             for idx in range(i_begin, i_end):
-            #*************************# 
-            # Complete function
-            
-
-            #*************************# 
-
+                #*************************#
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                rti, rfi, rei = rt[idx], rf[idx], re[idx]
+                wl, wr = weight[idx], (1 - weight[idx])
+                for dimension in range(ndims):
+                    for variable in range(nvars):
+                        ql = gradu[lti][dimension][variable][lei]
+                        qr = gradu[rti][dimension][variable][rei]
+                        gradf[dimension][variable][idx] = 0
+                        gradf[dimension][variable][idx] = wl*ql + wr*qr
+                #*************************#
+            #print("gradf", gradf, np.shape(gradf))
         return self.be.make_loop(self.nfpts, grad_at)
 
 #-------------------------------------------------------------------------------#    
@@ -208,6 +224,7 @@ class ParabolicBCInters(BaseBCInters):
         # avec = self._vec_snorm/np.einsum('ij,ij->j', ef, self._vec_snorm)
 
         correction = self._correction
+
         # Compiler arguments
         array = self.be.local_array()
        
@@ -220,11 +237,24 @@ class ParabolicBCInters(BaseBCInters):
             # Parse element views (fpts, grad)
             du    = uf[:nele]
             for idx in range(i_begin, i_end):
-                #*************************# 
-                # Complete function
-            
-
-                #*************************# 
+                muf = compute_mu()
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                #fn = np.empty(nfvars)
+                fn = 0
+                Sf = nf[:, idx] * sf[idx]
+                # Ef sanırım burda hesaplanacak
+                if correction == "minimum":
+                    Ef = dot(ef[:, idx], Sf, ndims)
+                elif correction == "orthogonal":
+                    Ef = sf[idx]
+                elif correction == "over_relaxed":
+                    Ef = sf[idx] * (dot(nf[:,idx], nf[:,idx], ndims)/dot(ef[:,idx], nf[:,idx], ndims))
+                else:
+                    print("Wrong correction type")
+                Tfe = Sf - Ef * ef[:, idx]
+                fn = -1 * muf * (Ef * (du[lti][lfi][0][lei] * inv_ef[idx]) + dot(gradf[:, 0, idx], Tfe, ndims))
+                # Daha sonra burda flux hesaplanmalı
+                uf[lti][lfi, 0, lei] = fn
                 
         return self.be.make_loop(self.nfpts, comm_flux)
 
@@ -245,13 +275,16 @@ class ParabolicBCInters(BaseBCInters):
             # Parse element views (fpts, grad)
             du = uf[:nele]
             gradu = uf[nele:]
-
             for idx in range(i_begin, i_end):
-               #*************************# 
-               # Complete function
-            
-
-               #*************************# 
+                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+                #*************************#
+                # Complete function
+                for dimension in range(ndims):
+                    for variable in range(nvars):
+                        gradf[dimension][variable][idx] = 0
+                        gradf[dimension][variable][idx] = gradu[lti][dimension][variable][lei]
+                        #gradf[dimension][variable][idx] = avec[dimension][idx] * gradu[lti][dimension][variable][lei]
+                #*************************#
 
         return self.be.make_loop(self.nfpts, grad_at)
 
