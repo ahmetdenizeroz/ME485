@@ -46,7 +46,7 @@ class ParabolicSystem(BaseSystem):
             # Compute residual if requested
             resid = sum(self.eles.compute_norm())
             #resid = self.eles.compute_norm()
-            #print(resid)
+            print(resid)
             return resid
         else:
             return 'none'

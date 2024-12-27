@@ -117,7 +117,6 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
 
             # For Rectengular Mesh
             for element in range(neles):
-                '''
                 x = xc[element][0]
                 y = xc[element][1]
                 L, W = 1, 1
@@ -126,7 +125,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 term_x = 0
                 term_y = 0
                 term_1 = (-2 * np.pi / (L ** 2))
-                for n in range(1, 21):
+                for n in range(1, 1): #Exact solution already 0
                     term_x += ((-1) ** (n + 1) + 1) * n * np.sin(n * np.pi * x / L) * np.sinh(n * np.pi * y / L ) / np.sinh(n * np.pi * W / L)
                     term_y += ((-1) ** (n + 1) + 1) * n * np.sin(n * np.pi * x / L) * np.sinh(n * np.pi * y / L ) / np.sinh(n * np.pi * W / L)
 
@@ -134,9 +133,9 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 flux_y = -1 * term_1 * term_y
 
                 flux_div = flux_x + flux_y
-                '''
+
                 #temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
-                temp = ((upts[0][element] - 0) ** 2) * vol[element]
+                temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
                 eror[element] = temp
             sum = np.sum(eror)
             norm = sum ** 0.5
