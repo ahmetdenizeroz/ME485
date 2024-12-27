@@ -114,11 +114,12 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
             eror = np.zeros((neles))
             exact_soln = np.zeros((neles))
             #print("upts", np.shape(upts))
-
+            '''
+            # For Rectengular Mesh
             for element in range(neles):
                 x = xc[element][0]
                 y = xc[element][1]
-                L, W = 3, 3
+                L, W = 1, 1
                 T2, T1 = 1, 0
                 flux_x = 0
                 term_x = 0
@@ -129,7 +130,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                     term_y += ((-1) ** (n + 1) + 1) * n * np.sin(n * np.pi * x / L) * np.sinh(n * np.pi * y / L ) / np.sinh(n * np.pi * W / L)
 
                 flux_x = term_1 * term_x
-                flux_y = term_1 * term_y
+                flux_y = -1 * term_1 * term_y
 
                 flux_div = flux_x + flux_y
                 temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
@@ -139,6 +140,7 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
 
             return norm
             '''
+            # For Disk Mesh
             for element in range(neles):
                 x = xc[element][0]
                 y = xc[element][1]
@@ -151,19 +153,17 @@ class ParabolicElements(BaseElements, ParabolicFluidElements):
                 flux= (k * (T2 - T1) / (r_i * np.log(r[1] / r[0])))
                 angle = np.arctan2(y ,x)
 
-                flux_div_x = (-1 * k * (x-y) * (x+y)) / (np.log(r[1]/r[0]) * ((x**2 +  y**2)**2))
-                flux_div_y = (-1 * k * (y**2 - x**2 )) / (np.log(r[1] / r[0]) * ((x ** 2 + y ** 2) ** 2))
+                flux_div_x = (T2 - T1) * k * (-1 * k * (x-y) * (x+y)) / (np.log(r[1]/r[0]) * ((x**2 +  y**2)**2))
+                flux_div_y = (T2 - T1) * k * (-1 * k * (y**2 - x**2 )) / (np.log(r[1] / r[0]) * ((x ** 2 + y ** 2) ** 2))
 
                 flux_div = flux_div_x + flux_div_y
-
+                print(flux_div)
                 temp = ((upts[0][element] - flux_div) ** 2) * vol[element]
                 eror[element] = temp
 
             sum = np.sum(eror)
             norm = sum**0.5
-            '''
             return norm
-
         return self.be.compile(run, outer=True)
 
 #-------------------------------------------------------------------------------#
