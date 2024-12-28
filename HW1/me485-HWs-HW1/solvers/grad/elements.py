@@ -132,7 +132,7 @@ class GradElements(BaseElements,  gradFluidElements):
         #print("dxc", self.dxc)
         #print("exact grad", exact_grad)
         #print("grad is", self.grad)
-        print("diff", diff)
+        #print("diff", diff)
         #print("diff", self.grad - exact_grad)
         # **************************#
 
