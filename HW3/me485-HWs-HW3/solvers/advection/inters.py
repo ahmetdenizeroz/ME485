@@ -100,16 +100,12 @@ class AdvectionIntInters(BaseIntInters):
         rt, re, rf = self._ridx
 
         def compute_minmax(i_begin, i_end, uf, *uext):
-            for idx in range(i_begin, i_end):
-                lti, lfi, lei = lt[idx], lf[idx], le[idx]
-                rti, rfi, rei = rt[idx], rf[idx], re[idx]
-
-                #---------------------------------#  
-                # complete the function
-                #---------------------------------#  
-
-
-
+            for face in range(i_begin, i_end):
+                lti, lfi, lei = lt[face], lf[face], le[face]
+                rti, rfi, rei = rt[face], rf[face], re[face]
+                for variable in range(nvars):
+                    uext[0][face][variable][lei] = max(uf[lti][lfi, variable, lei], uf[rti][rfi, variable, rei])
+                    uext[1][face][variable][rei] = min(uf[lti][lfi, variable, lei], uf[rti][rfi, variable, rei])
 
         return self.be.make_loop(self.nfpts, compute_minmax)
 #-------------------------------------------------------------------------------#    

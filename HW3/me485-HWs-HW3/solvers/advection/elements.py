@@ -125,7 +125,9 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
 #-------------------------------------------------------------------------------#
     def _make_barth_jespersen(self, limiter):
         nface, ndims,  nvars = self.nface, self.ndims, self.nvars
+        # dxf: Displacement vector of face center from cell center
         dxf = self.dxf
+        print("dxf", np.shape(dxf))
         # Compiler arguments
         array = self.be.local_array()
         # fext: max(0)/ min(1) of the cell center values on face 
@@ -135,22 +137,21 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
         # upts: solution at cell centers, size of [nvars, nelem] 
         # grad: gradient at cell centers, size of [ndims, nvars, nelem] 
         def _cal_barth_jespersen(i_begin, i_end, upts, grad, fext, lim):
-            for i in range(i_begin, i_end):
-               # complete the function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            for element in range(i_begin, i_end):
+                # complete the function
+                for variable in range(nvars):
+                    candidates = np.zeros((nface))
+                    fi_max = max(fext[0][:][variable][element])# for face in range(nface))
+                    fi_min = min(fext[1][:][variable][element])# for face in range(nface))
+                    for face in range(nface):
+                        trianglef = dot(grad[:][variable][element], dxf[face][:][element], ndims)
+                        if trianglef > 0:
+                            candidates[face] = min(1, (fi_max - upts[variable][element]) / trianglef)
+                        if trianglef < 0:
+                            candidates[face] = min(1, (fi_min - upts[variable][element]) / trianglef)
+                        if trianglef == 0:
+                            candidates[face] = 1
+                    lim[variable][element] = min(candidates)
 
         return self.be.make_loop(self.neles, _cal_barth_jespersen)
 
@@ -161,14 +162,14 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
         neles, nvars, ndims = self.neles, self.nvars, self.ndims
         xc = self.xc.T   
         def run(upts):
-           # complete the function
-
-
-
-
-
-
-
+            # complete the function
+            total_area = np.zeros((nvars, neles))
+            for element in range(neles):
+                for variable in range(nvars):
+                    if upts[variable][element] <= 0:
+                        total_area[variable][element] += vol[element]
+            norm = total_area
+            return norm
         return self.be.compile(run, outer=True)
 
 
@@ -205,16 +206,11 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
         nvars, nface = self.nvars, self.nface
         def _compute_fpts(i_begin, i_end, upts, fpts):
             # Copy upts to fpts
-            for idx in range(i_begin, i_end):
+            for element in range(i_begin, i_end):
                 # complete the function
-
-
-
-
-
-
-
-
+                for face in range(nface):
+                    for variable in range(nvars):
+                        fpts[face, variable, element] = upts[variable, element]
         return self.be.make_loop(self.neles, _compute_fpts)
 
 #-------------------------------------------------------------------------------#
