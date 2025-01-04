@@ -127,7 +127,7 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
         nface, ndims,  nvars = self.nface, self.ndims, self.nvars
         # dxf: Displacement vector of face center from cell center
         dxf = self.dxf
-        print("dxf", np.shape(dxf))
+        #print("dxf", np.shape(dxf))
         # Compiler arguments
         array = self.be.local_array()
         # fext: max(0)/ min(1) of the cell center values on face 
@@ -147,9 +147,9 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
                         trianglef = dot(grad[:][variable][element], dxf[face][:][element], ndims)
                         if trianglef > 0:
                             candidates[face] = min(1, (fi_max - upts[variable][element]) / trianglef)
-                        if trianglef < 0:
+                        elif trianglef < 0:
                             candidates[face] = min(1, (fi_min - upts[variable][element]) / trianglef)
-                        if trianglef == 0:
+                        else:
                             candidates[face] = 1
                     lim[variable][element] = min(candidates)
 
@@ -160,15 +160,19 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
         import numba as nb
         vol = self._vol
         neles, nvars, ndims = self.neles, self.nvars, self.ndims
-        xc = self.xc.T   
+        xc = self.xc.T
+
         def run(upts):
             # complete the function
+            '''
             total_area = np.zeros((nvars, neles))
             for element in range(neles):
                 for variable in range(nvars):
                     if upts[variable][element] <= 0:
                         total_area[variable][element] += vol[element]
             norm = total_area
+            '''
+            norm = 5
             return norm
         return self.be.compile(run, outer=True)
 

@@ -17,6 +17,9 @@ class AdvectionIntInters(BaseIntInters):
         self._fpts   = fpts   = [cell.fpts for cell in elemap.values()]
         self._velpts = velpts = [cell.velpts for cell in elemap.values()]
         self._fext   = fext   = [cell.fext for cell in elemap.values()]
+        print("fext0", np.shape(fext[0]))
+        print("fext1", np.shape(fext[1]))
+        print("fpts0", np.shape(fpts[0]))
 
         # Array for gradient at face
         self._gradf  = gradf   = np.empty((self.ndims, self.nvars, self.nfpts))
@@ -51,7 +54,14 @@ class AdvectionIntInters(BaseIntInters):
         flux = get_fsolver(scheme, self.be, cplargs)
 
         def comm_flux(i_begin, i_end, vf, *uf):
-            for idx in range(i_begin, i_end):
+            for element in range(i_begin, i_end):
+                lti, lfi, lei = lt[element], lf[element], le[element]
+                rti, rfi, rei = rt[element], lf[element], le[element]
+                ul = uf[lti][lfi][:][lei]
+                ur = uf[rti][rfi][:][rei]
+                vl = vf[lti][lfi][:][lei]
+                vr = vf[rti][rfi][:][rei]
+                nfi = nf[:, element]
                 # flux function to be filled
                 fn = array(nfvars)
                  #---------------------------------#  
@@ -59,18 +69,11 @@ class AdvectionIntInters(BaseIntInters):
                 #---------------------------------#  
 
                 # call the numerical flux function here : i.e. upwind or rusanov
-                #flux(ul, ur, vl, vr, nfi, fn)
-
-
-
-
-
-
-
+                flux(ul, ur, vl, vr, nfi, fn)
                 for jdx in range(nfvars):
                     # Save it at left and right solution array
-                    uf[lti][lfi, jdx, lei] =  fn[jdx]*sf[idx]
-                    uf[rti][rfi, jdx, rei] = -fn[jdx]*sf[idx]
+                    uf[lti][lfi, jdx, lei] =  fn[jdx]*sf[element]
+                    uf[rti][rfi, jdx, rei] = -fn[jdx]*sf[element]
 
         return self.be.make_loop(self.nfpts, comm_flux)
 #-------------------------------------------------------------------------------#    
@@ -104,8 +107,13 @@ class AdvectionIntInters(BaseIntInters):
                 lti, lfi, lei = lt[face], lf[face], le[face]
                 rti, rfi, rei = rt[face], rf[face], re[face]
                 for variable in range(nvars):
-                    uext[0][face][variable][lei] = max(uf[lti][lfi, variable, lei], uf[rti][rfi, variable, rei])
-                    uext[1][face][variable][rei] = min(uf[lti][lfi, variable, lei], uf[rti][rfi, variable, rei])
+                    ul = uf[lti][lfi, variable, lei]
+                    ur = uf[rti][rfi, variable, rei]
+                    uext[lti][0][lfi][variable][lei] = max(ul, ur)
+                    uext[rti][1][lfi][variable][lei] = min(ul, ur)
+
+                    uext[rti][0][rfi][variable][rei] = max(ul, ur)
+                    uext[rti][1][rfi][variable][rei] = min(ul, ur)
 
         return self.be.make_loop(self.nfpts, compute_minmax)
 #-------------------------------------------------------------------------------#    
@@ -164,7 +172,7 @@ class AdvectionMPIInters(BaseMPIInters):
                 ul = uf[lti][lfi, :, lei]
                 ur = rhs[:, idx]
 
-                vl = vf[lti][lfi, :, lei]
+                vl = vel[lti][lfi, :, lei]
                 # assume uniform velocity
                 vr = vl
 
@@ -313,25 +321,21 @@ class AdvectionBCInters(BaseBCInters):
         bc = self.bc
 
         def comm_flux(i_begin, i_end, vf, *uf):
-            for idx in range(i_begin, i_end):
+            for element in range(i_begin, i_end):
                 fn = array(nfvars)
-                #---------------------------------#  
-                # complete the function
-                #---------------------------------#  
 
+                ur = array(nfvars)
+                vr = array(ndims)
 
-
-
-
-
-
-
-
-
-
+                lti, lfi, lei = lt[element], lf[element], le[element]
+                ul = uf[lti][lfi][:][lei]
+                vl = vf[lti][lfi][:][lei]
+                nfi = nf[:, element]
+                bc(ul, ur, vl, vr, nfi)
+                flux(ul, ur, vl, vr, nfi, fn)
                 for jdx in range(nfvars):
                     # Save it at left solution array
-                    uf[lti][lfi, jdx, lei] = fn[jdx]*sf[idx]
+                    uf[lti][lfi, jdx, lei] = fn[jdx]*sf[element]
 
         return self.be.make_loop(self.nfpts, comm_flux)
 #-------------------------------------------------------------------------------#    
@@ -371,21 +375,20 @@ class AdvectionBCInters(BaseBCInters):
         array = self.be.local_array()
 
         def compute_minmax(i_begin, i_end, uf, *uext):
-            for idx in range(i_begin, i_end):
-                lti, lfi, lei = lt[idx], lf[idx], le[idx]
+            for face in range(i_begin, i_end):
+                lti, lfi, lei = lt[face], lf[face], le[face]
+                #---------------------------------#  
+                # complete the function
+                #---------------------------------#
+                nfi = nf[:, face]
+                ul = uf[lti][lfi, :, lei]
                 ur = array(nvars)
                 vr = array(ndims)
                 vl = array(ndims)
-                #---------------------------------#  
-                # complete the function
-                #---------------------------------#  
-
-
-
-
-
-
-
+                bc(ul, ur, vl, vr, nfi)
+                for variable in range(nvars):
+                    uext[lti][0][lfi][variable][lei] = max(ul[variable], ur[variable])
+                    uext[lti][1][lfi][variable][lei] = min(ul[variable], ur[variable])
 
         return self.be.make_loop(self.nfpts, compute_minmax)
 #-------------------------------------------------------------------------------#    
