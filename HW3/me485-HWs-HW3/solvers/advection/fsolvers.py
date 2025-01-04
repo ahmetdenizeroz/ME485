@@ -25,17 +25,14 @@ def make_rusanov(cplargs):
     def fsolver(ul, ur, vl, vr, nf, fn):
         fl = array(nvars)
         fr = array(nvars)
-
         # this is u*phi*n 
         flux_func(ul, vl, nf, fl)
         flux_func(ur, vr, nf, fr)
-        
         #---------------------------------#
         # TO DO: ????????????
         vnl = dot(vl, nf, ndims)
         vnr = dot(vr, nf, ndims)
-        a = max(abs(vnl), abs(vnr))
-
+        a = max(abs(vnl), abs(vnr) + eps)
         for i in range(nvars):
             fn[i] = 0.5 * (fl[i] + fr[i]) - 0.5 * a * (ur[i] - ul[i])
         #---------------------------------#  
@@ -49,31 +46,23 @@ def make_upwind(cplargs):
     array     = cplargs['array']
     ndims     = cplargs['ndims']
     def fsolver(ul, ur, vl, vr, nf, fn):
-        print("upwindhear1")
         fl = array(nvars)
-        print("upwindhear2")
         fr = array(nvars)
-        print("upwindhear3")
-
-        flux = dot(vl, nf, ndims)
-        print("upwindhear6")
 
         flux_func(ul, vl, nf, fl)
-        print("upwindhear4")
 
         flux_func(ur, vr, nf, fr)
-        print("upwindhear5")
+
+        flux = dot(vl, nf, ndims)
 
         # this is u*phi*n
         if flux > 0:
-            fn[:] = fl[:]
-            print("upwindhear7")
+            for variable in range(nvars):
+                fn[variable] = fl[variable]
+            #flux_func(ul, vr, nf, fn)
         else:
-            fn[:] = fr[:]
-            print("upwindhear8")
-        
-        #---------------------------------#  
-        # complete the function
-        #---------------------------------#  
+            for variable in range(nvars):
+                fn[variable] = fr[variable]
+            #flux_func(ur, vr, nf, fn)
 
     return fsolver

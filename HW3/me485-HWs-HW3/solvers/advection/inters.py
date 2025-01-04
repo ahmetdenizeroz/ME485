@@ -17,9 +17,6 @@ class AdvectionIntInters(BaseIntInters):
         self._fpts   = fpts   = [cell.fpts for cell in elemap.values()]
         self._velpts = velpts = [cell.velpts for cell in elemap.values()]
         self._fext   = fext   = [cell.fext for cell in elemap.values()]
-        print("fext0", np.shape(fext[0]))
-        print("fext1", np.shape(fext[1]))
-        print("fpts0", np.shape(fpts[0]))
 
         # Array for gradient at face
         self._gradf  = gradf   = np.empty((self.ndims, self.nvars, self.nfpts))
@@ -33,7 +30,7 @@ class AdvectionIntInters(BaseIntInters):
         muf = np.empty(self.nfpts)
         self.compute_flux = Kernel(self._make_flux(), self._velpts, *fpts)
 
-#-------------------------------------------------------------------------------#    
+#-------------------------------------------------------------------------------#
     def _make_flux(self):
         ndims, nfvars = self.ndims, self.nfvars
         lt, le, lf = self._lidx
@@ -55,37 +52,36 @@ class AdvectionIntInters(BaseIntInters):
 
         def comm_flux(i_begin, i_end, vf, *uf):
             for element in range(i_begin, i_end):
-                print(f"fluxhear1 {element}")
-                lti, lfi, lei = lt[element], lf[element], le[element]
-                print("fluxhear2")
-                rti, rfi, rei = rt[element], lf[element], le[element]
-                print("fluxhear3")
-                ul = uf[lti][lfi][:][lei]
-                print("fluxhear4")
-                ur = uf[rti][rfi][:][rei]
-                print("fluxhear5")
-                vl = vf[lti][lfi][:][lei]
-                print("fluxhear6")
-                vr = vf[rti][rfi][:][rei]
-                print("fluxhear7")
-                nfi = nf[:, element]
-                print("fluxhear8")
                 # flux function to be filled
                 fn = array(nfvars)
-                print("fluxhear9")
+                #fn = np.zeros(nfvars)
+
+                lti, lfi, lei = lt[element], lf[element], le[element]
+                rti, rfi, rei = rt[element], lf[element], le[element]
+
+                nfi = nf[:, element]
+
+                ul = uf[lti][lfi, :, lei]
+
+                ur = uf[rti][rfi, :, rei]
+
+                vl = vf[lti][lfi, :, lei]
+
+                vr = vf[rti][rfi, :, rei]
+
                  #---------------------------------#  
                 # complete the function
                 #---------------------------------#  
 
                 # call the numerical flux function here : i.e. upwind or rusanov
                 flux(ul, ur, vl, vr, nfi, fn)
-                print("fluxhear10")
+
                 for jdx in range(nfvars):
                     # Save it at left and right solution array
                     uf[lti][lfi, jdx, lei] =  fn[jdx]*sf[element]
-                    print("fluxhear11")
+
                     uf[rti][rfi, jdx, rei] = -fn[jdx]*sf[element]
-                    print("fluxhear12")
+
 
         return self.be.make_loop(self.nfpts, comm_flux)
 #-------------------------------------------------------------------------------#    
@@ -122,11 +118,11 @@ class AdvectionIntInters(BaseIntInters):
                     ul = uf[lti][lfi, variable, lei]
                     ur = uf[rti][rfi, variable, rei]
 
-                    uext[lti][0][lfi][variable][lei] = max(ul, ur)
-                    uext[lti][1][lfi][variable][lei] = min(ul, ur)
+                    uext[lti][0, lfi, variable, lei] = max(ul, ur)
+                    uext[lti][1, lfi, variable, lei] = min(ul, ur)
 
-                    uext[rti][0][rfi][variable][rei] = max(ul, ur)
-                    uext[rti][1][rfi][variable][rei] = min(ul, ur)
+                    uext[rti][0, rfi, variable, rei] = max(ul, ur)
+                    uext[rti][1, rfi, variable, rei] = min(ul, ur)
 
         return self.be.make_loop(self.nfpts, compute_minmax)
 #-------------------------------------------------------------------------------#    
@@ -311,7 +307,7 @@ class AdvectionBCInters(BaseBCInters):
         # Kernel to compute flux
         self.compute_flux = Kernel(self._make_flux(nele), self._velpts, *fpts)
 
-#-------------------------------------------------------------------------------#    
+#-------------------------------------------------------------------------------#
     def _make_flux(self, nele):
         ndims, nfvars = self.ndims, self.nfvars
         lt, le, lf = self._lidx
@@ -336,14 +332,18 @@ class AdvectionBCInters(BaseBCInters):
         def comm_flux(i_begin, i_end, vf, *uf):
             for element in range(i_begin, i_end):
                 fn = array(nfvars)
+                #fn = np.zeros(nfvars)
+
+                lti, lfi, lei = lt[element], lf[element], le[element]
+
+                nfi = nf[:, element]
+
+                ul = uf[lti][lfi, :, lei]
+                vl = vf[lti][lfi, :, lei]
 
                 ur = array(nfvars)
                 vr = array(ndims)
 
-                lti, lfi, lei = lt[element], lf[element], le[element]
-                ul = uf[lti][lfi][:][lei]
-                vl = vf[lti][lfi][:][lei]
-                nfi = nf[:, element]
                 bc(ul, ur, vl, vr, nfi)
                 flux(ul, ur, vl, vr, nfi, fn)
                 for jdx in range(nfvars):
@@ -393,15 +393,15 @@ class AdvectionBCInters(BaseBCInters):
                 #---------------------------------#  
                 # complete the function
                 #---------------------------------#
-                nfi = nf[:, face]
-                ul = uf[lti][lfi, :, lei]
                 ur = array(nvars)
                 vr = array(ndims)
                 vl = array(ndims)
+                ul = uf[lti][lfi, :, lei]
+                nfi = nf[:, face]
                 bc(ul, ur, vl, vr, nfi)
                 for variable in range(nvars):
-                    uext[lti][0][lfi][variable][lei] = max(ul[variable], ur[variable])
-                    uext[lti][1][lfi][variable][lei] = min(ul[variable], ur[variable])
+                    uext[lti][0, lfi, variable, lei] = max(ul[variable], ur[variable])
+                    uext[lti][1, lfi, variable, lei] = min(ul[variable], ur[variable])
 
         return self.be.make_loop(self.nfpts, compute_minmax)
 #-------------------------------------------------------------------------------#    

@@ -21,18 +21,18 @@ class AdvectionSystem(BaseSystem):
 
         # Compute solution at flux point (face center)
         self.eles.compute_fpts()
-        print("hear1")
+        #print("hear1")
         if self.mpiint:
             # Start MPI communication for Inters
             self.mpiint.pack()
             self.mpiint.send(q)
             self.mpiint.recv(q)
-        print("hear2")
+        #print("hear2")
         # Compute Difference of solution at Inters
         self.iint.compute_delu()
-        print("hear3")
+        #print("hear3")
         self.bint.compute_delu()
-        print("hear4")
+        #print("hear4")
         if self.mpiint:
             # Finalize MPI communication
             q.sync()
@@ -41,7 +41,7 @@ class AdvectionSystem(BaseSystem):
             self.mpiint.compute_delu()
         
         self.eles.compute_grad()
-        print("hear5")
+        #print("hear5")
         if self._limiter=='mlp-u1' or self._limiter=='mlp-u1':
             # Compute extreme values at vertex
             self.vertex.compute_extv()
@@ -61,35 +61,35 @@ class AdvectionSystem(BaseSystem):
             self.iint.compute_minmax()
             self.bint.compute_minmax()
 
-        print("hear6")
+        #print("hear6")
         # Compute slope limiter
         self.eles.compute_limiter()
-        print("hear7")
+        #print("hear7")
         # print(self.eles.lim)
         # Compute reconstruction
         self.eles.compute_recon()
-        print("hear8")
+        #print("hear8")
         if self._is_recon and self.mpiint:
             # Start MPI communication to exchange reconstructed values at face
             self.mpiint.pack()
             self.mpiint.send(q)
             self.mpiint.recv(q)
-        print("hear9")
+        #print("hear9")
         # # Compute flux
         self.iint.compute_flux()
-        print("hear9.5")
+        #print("hear9.5")
         self.bint.compute_flux()
-        print("hear10")
+        #print("hear10")
         if self.mpiint:
             # Finalize MPI communication
             q.sync()
 
             # Compute flux at MPI Inters
             self.mpiint.compute_flux()
-        print("hear11")
+        #print("hear11")
         # Compute divergence 
         self.eles.div_upts(t)
-        print("hear12")
+        #print("hear12")
         if is_norm:
             # Compute residual if requested
             resid = sum(self.eles.compute_norm())
@@ -98,7 +98,7 @@ class AdvectionSystem(BaseSystem):
             return 'none'
 
         # sys.exit()
-        print("hear13")
+        #print("hear13")
 #-------------------------------------------------------------------------------#    
     def timestep(self, cfl, idx_in=0):
         # Compute time step with the given CFL number
