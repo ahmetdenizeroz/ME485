@@ -45,12 +45,17 @@ def make_upwind(cplargs):
     def fsolver(ul, ur, vl, vr, nf, fn):
         fl = array(nvars)
         fr = array(nvars)
+
         flux = dot(vl, nf, ndims)
+
+        flux_func(ul, vl, nf, fl)
+        flux_func(ur, vr, nf, fr)
+
         # this is u*phi*n
         if flux > 0:
-            fn = flux_func(ul, vl, nf, fl)
+            fn[:] = fl[:]
         else:
-            fn = flux_func(ur, vr, nf, fr)
+            fn[:] = fr[:]
         
         #---------------------------------#  
         # complete the function

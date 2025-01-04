@@ -130,28 +130,28 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
         #print("dxf", np.shape(dxf))
         # Compiler arguments
         array = self.be.local_array()
-        # fext: max(0)/ min(1) of the cell center values on face 
+        # fext: max(0)/ min(1) of the cell center values on face
         # size of [2,nface,nvars, nelem]
-        
-        # lim: limiter array: result of limiter function, size of [nvars, nelem] 
-        # upts: solution at cell centers, size of [nvars, nelem] 
-        # grad: gradient at cell centers, size of [ndims, nvars, nelem] 
+
+        # lim: limiter array: result of limiter function, size of [nvars, nelem]
+        # upts: solution at cell centers, size of [nvars, nelem]
+        # grad: gradient at cell centers, size of [ndims, nvars, nelem]
         def _cal_barth_jespersen(i_begin, i_end, upts, grad, fext, lim):
             for element in range(i_begin, i_end):
                 # complete the function
                 for variable in range(nvars):
-                    candidates = np.zeros((nface))
-                    fi_max = max(fext[0][:][variable][element])# for face in range(nface))
-                    fi_min = min(fext[1][:][variable][element])# for face in range(nface))
+                    candidates = np.zeros(nface)
+                    fi_max = max(fext[0,:,variable,element])# for face in range(nface))
+                    fi_min = min(fext[1,:,variable,element])# for face in range(nface))
                     for face in range(nface):
-                        trianglef = dot(grad[:][variable][element], dxf[face][:][element], ndims)
+                        trianglef = dot(grad[:,variable,element], dxf[face,:,element], ndims)
                         if trianglef > 0:
-                            candidates[face] = min(1, (fi_max - upts[variable][element]) / trianglef)
+                            candidates[face] = min(1, (fi_max - upts[variable,element]) / trianglef)
                         elif trianglef < 0:
-                            candidates[face] = min(1, (fi_min - upts[variable][element]) / trianglef)
-                        else:
+                            candidates[face] = min(1, (fi_min - upts[variable,element]) / trianglef)
+                        elif trianglef == 0:
                             candidates[face] = 1
-                    lim[variable][element] = min(candidates)
+                    lim[variable, element] = min(candidates)
 
         return self.be.make_loop(self.neles, _cal_barth_jespersen)
 

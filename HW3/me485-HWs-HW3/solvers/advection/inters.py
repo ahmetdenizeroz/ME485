@@ -109,8 +109,9 @@ class AdvectionIntInters(BaseIntInters):
                 for variable in range(nvars):
                     ul = uf[lti][lfi, variable, lei]
                     ur = uf[rti][rfi, variable, rei]
+
                     uext[lti][0][lfi][variable][lei] = max(ul, ur)
-                    uext[rti][1][lfi][variable][lei] = min(ul, ur)
+                    uext[lti][1][lfi][variable][lei] = min(ul, ur)
 
                     uext[rti][0][rfi][variable][rei] = max(ul, ur)
                     uext[rti][1][rfi][variable][rei] = min(ul, ur)
