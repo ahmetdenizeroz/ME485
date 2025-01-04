@@ -164,15 +164,12 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
 
         def run(upts):
             # complete the function
-            '''
-            total_area = np.zeros((nvars, neles))
+            total_area = np.zeros(nvars)
             for element in range(neles):
                 for variable in range(nvars):
-                    if upts[variable][element] <= 0:
-                        total_area[variable][element] += vol[element]
+                    if upts[0][variable][element] <= 0:
+                        total_area[variable] += abs(vol[element])
             norm = total_area
-            '''
-            norm = 5
             return norm
         return self.be.compile(run, outer=True)
 
