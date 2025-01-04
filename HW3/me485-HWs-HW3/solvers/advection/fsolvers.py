@@ -22,20 +22,23 @@ def make_rusanov(cplargs):
     flux_func = cplargs['flux_func']
     array     = cplargs['array']
     ndims     = cplargs['ndims']
+
     def fsolver(ul, ur, vl, vr, nf, fn):
         fl = array(nvars)
         fr = array(nvars)
-        # this is u*phi*n 
+
+        # this is u*phi*n
         flux_func(ul, vl, nf, fl)
         flux_func(ur, vr, nf, fr)
-        #---------------------------------#
-        # TO DO: ????????????
+
+        # ---------------------------------#
         vnl = dot(vl, nf, ndims)
         vnr = dot(vr, nf, ndims)
-        a = max(abs(vnl), abs(vnr) + eps)
+        a = max(abs(vnl), abs(vnr))
+
         for i in range(nvars):
             fn[i] = 0.5 * (fl[i] + fr[i]) - 0.5 * a * (ur[i] - ul[i])
-        #---------------------------------#  
+        # ---------------------------------#
 
     return fsolver
 
