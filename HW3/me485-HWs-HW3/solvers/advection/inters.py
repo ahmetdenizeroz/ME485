@@ -57,7 +57,7 @@ class AdvectionIntInters(BaseIntInters):
                 #fn = np.zeros(nfvars)
 
                 lti, lfi, lei = lt[element], lf[element], le[element]
-                rti, rfi, rei = rt[element], lf[element], le[element]
+                rti, rfi, rei = rt[element], rf[element], re[element]
 
                 nfi = nf[:, element]
 

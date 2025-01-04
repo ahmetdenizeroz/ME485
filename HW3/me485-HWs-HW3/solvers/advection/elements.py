@@ -137,7 +137,6 @@ class AdvectionElements(BaseElements, AdvectionFluidElements):
         # upts: solution at cell centers, size of [nvars, nelem]
         # grad: gradient at cell centers, size of [ndims, nvars, nelem]
         def _cal_barth_jespersen(i_begin, i_end, upts, grad, fext, lim):
-            print("fext", np.shape(fext))
             for element in range(i_begin, i_end):
                 # complete the function
                 for variable in range(nvars):
