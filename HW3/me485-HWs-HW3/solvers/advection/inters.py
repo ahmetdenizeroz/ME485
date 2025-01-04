@@ -55,25 +55,37 @@ class AdvectionIntInters(BaseIntInters):
 
         def comm_flux(i_begin, i_end, vf, *uf):
             for element in range(i_begin, i_end):
+                print(f"fluxhear1 {element}")
                 lti, lfi, lei = lt[element], lf[element], le[element]
+                print("fluxhear2")
                 rti, rfi, rei = rt[element], lf[element], le[element]
+                print("fluxhear3")
                 ul = uf[lti][lfi][:][lei]
+                print("fluxhear4")
                 ur = uf[rti][rfi][:][rei]
+                print("fluxhear5")
                 vl = vf[lti][lfi][:][lei]
+                print("fluxhear6")
                 vr = vf[rti][rfi][:][rei]
+                print("fluxhear7")
                 nfi = nf[:, element]
+                print("fluxhear8")
                 # flux function to be filled
                 fn = array(nfvars)
+                print("fluxhear9")
                  #---------------------------------#  
                 # complete the function
                 #---------------------------------#  
 
                 # call the numerical flux function here : i.e. upwind or rusanov
                 flux(ul, ur, vl, vr, nfi, fn)
+                print("fluxhear10")
                 for jdx in range(nfvars):
                     # Save it at left and right solution array
                     uf[lti][lfi, jdx, lei] =  fn[jdx]*sf[element]
+                    print("fluxhear11")
                     uf[rti][rfi, jdx, rei] = -fn[jdx]*sf[element]
+                    print("fluxhear12")
 
         return self.be.make_loop(self.nfpts, comm_flux)
 #-------------------------------------------------------------------------------#    

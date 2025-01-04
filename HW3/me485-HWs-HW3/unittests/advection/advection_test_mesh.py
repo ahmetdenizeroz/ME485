@@ -7,7 +7,7 @@ gmsh.initialize(sys.argv)
 
 # Next add a new model named "cavity" 
 gmsh.model.add("mixed")
-lc = 0.015
+lc = 0.1
 
 #Points
 p1  = gmsh.model.geo.addPoint(0.0, 0.0, 0.0, lc);
