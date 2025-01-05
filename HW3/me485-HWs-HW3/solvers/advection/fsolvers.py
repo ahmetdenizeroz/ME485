@@ -32,9 +32,8 @@ def make_rusanov(cplargs):
         flux_func(ur, vr, nf, fr)
 
         # ---------------------------------#
-        c = gamma ** 2
-        vnl = dot(vl, nf, ndims) + c
-        vnr = dot(vr, nf, ndims) + c
+        vnl = dot(vl, nf, ndims)
+        vnr = dot(vr, nf, ndims)
         a = max(abs(vnl), abs(vnr))
 
         for i in range(nvars):
